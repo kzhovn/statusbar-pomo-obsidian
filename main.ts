@@ -1,28 +1,35 @@
-import { App, Modal, Notice, Plugin, PluginSettingTab, Setting } from 'obsidian';
+import { App, Modal, Notice, Plugin, PluginSettingTab, Setting, moment } from 'obsidian';
 
-interface MyPluginSettings {
-	mySetting: string;
+interface PomoSettings {
+	pomo: number;
+	shortBreak: number;
+	longBreak: number;
+	longBreakInterval: number;
+	sessionsCompleted: number;
 }
 
-const DEFAULT_SETTINGS: MyPluginSettings = {
-	mySetting: 'default'
+const DEFAULT_SETTINGS: PomoSettings = {
+	pomo: 25,
+	shortBreak: 5,
+	longBreak: 15,
+	longBreakInterval: 4,
+	sessionsCompleted: 0
 }
 
-export default class MyPlugin extends Plugin {
-	settings: MyPluginSettings;
+export default class PomoTimer extends Plugin {
+	settings: PomoSettings;
+	statusBar: HTMLElement; /*why is it an HTML element? what does this mean? */
 
 	async onload() {
-		console.log('loading plugin');
+		console.log('Loading status bar pomo timer...');
 
 		await this.loadSettings();
 
-		this.addRibbonIcon('dice', 'Sample Plugin', () => {
+		/*this.addRibbonIcon('dice', 'Sample Plugin', () => {
 			new Notice('This is a notice!');
-		});
+		});*/
 
-		this.addStatusBarItem().setText('Status Bar Text');
-
-		this.addCommand({
+		/*this.addCommand({
 			id: 'open-sample-modal',
 			name: 'Open Sample Modal',
 			// callback: () => {
@@ -38,9 +45,18 @@ export default class MyPlugin extends Plugin {
 				}
 				return false;
 			}
-		});
+		});*/
 
-		this.addSettingTab(new SampleSettingTab(this.app, this));
+		this.statusBar = this.addStatusBarItem();
+		var startTime = moment()
+		
+		this.registerInterval(window.setInterval(() => 
+			this.statusBar.setText(this.setStatusBarText(startTime)), 500));
+
+
+		
+
+		/*this.addSettingTab(new SampleSettingTab(this.app, this));
 
 		this.registerCodeMirror((cm: CodeMirror.Editor) => {
 			console.log('codemirror', cm);
@@ -48,9 +64,15 @@ export default class MyPlugin extends Plugin {
 
 		this.registerDomEvent(document, 'click', (evt: MouseEvent) => {
 			console.log('click', evt);
-		});
+		});*/
 
-		this.registerInterval(window.setInterval(() => console.log('setInterval'), 5 * 60 * 1000));
+	}
+
+	setStatusBarText(startTime): string {
+		const secsSinceStart = moment().diff(startTime, "seconds")
+		const secCountDown = (DEFAULT_SETTINGS.pomo * 60)- secsSinceStart
+		const formatedCountDown = moment.utc(secCountDown * 1000).format("mm:ss") /*NOTE: this one works with times <60 minutes*/
+		return formatedCountDown.toString()
 	}
 
 	onunload() {
@@ -66,36 +88,38 @@ export default class MyPlugin extends Plugin {
 	}
 }
 
+
 class SampleModal extends Modal {
 	constructor(app: App) {
 		super(app);
 	}
 
 	onOpen() {
-		let {contentEl} = this;
+		let { contentEl } = this;
 		contentEl.setText('Woah!');
 	}
 
 	onClose() {
-		let {contentEl} = this;
+		let { contentEl } = this;
 		contentEl.empty();
 	}
 }
 
+/*
 class SampleSettingTab extends PluginSettingTab {
-	plugin: MyPlugin;
+	plugin: PomoTimer;
 
-	constructor(app: App, plugin: MyPlugin) {
+	constructor(app: App, plugin: PomoTimer) {
 		super(app, plugin);
 		this.plugin = plugin;
 	}
 
 	display(): void {
-		let {containerEl} = this;
+		let { containerEl } = this;
 
 		containerEl.empty();
 
-		containerEl.createEl('h2', {text: 'Settings for my awesome plugin.'});
+		containerEl.createEl('h2', { text: 'Settings for my awesome plugin.' });
 
 		new Setting(containerEl)
 			.setName('Setting #1')
@@ -105,8 +129,8 @@ class SampleSettingTab extends PluginSettingTab {
 				.setValue('')
 				.onChange(async (value) => {
 					console.log('Secret: ' + value);
-					this.plugin.settings.mySetting = value;
+					this.plugin.settings.PomoSettings = value;
 					await this.plugin.saveSettings();
 				}));
 	}
-}
+}*/
