@@ -6,15 +6,15 @@ interface PomoSettings {
 	shortBreak: number;
 	longBreak: number;
 	longBreakInterval: number;
-	sessionsCompleted: number;
+	totalPomosCompleted: number;
 }
 
 const DEFAULT_SETTINGS: PomoSettings = {
 	pomo: .5,
 	shortBreak: .2,
-	longBreak: 15,
-	longBreakInterval: 4,
-	sessionsCompleted: 0
+	longBreak: 1,
+	longBreakInterval: 2,
+	totalPomosCompleted: 0
 }
 
 enum Mode {
@@ -36,6 +36,7 @@ export default class PomoTimer extends Plugin {
 	mode: Mode;
 	pausedTime: number;  /*Time left on paused timer, in milliseconds*/
 	paused: boolean;
+	pomosSinceStart: number;
 
 	async onload() {
 		console.log('Loading status bar pomo timer...');
@@ -45,6 +46,7 @@ export default class PomoTimer extends Plugin {
 		this.statusBar = this.addStatusBarItem();
 		this.mode = Mode.NoTimer;
 		this.paused = false;
+		this.pomosSinceStart = 0;
 
 		/*Adds icon to the left side bar which starts the pomo timer when clicked*/
 		/*if no timer is currently running, and otherwise quits current timer*/
@@ -126,7 +128,8 @@ export default class PomoTimer extends Plugin {
 			/*if reaching the end of the current timer, switch to the next one (e.g. pomo -> break*/
 			else if (moment().isSameOrAfter(this.endTime)) {
 				if (this.mode === Mode.Pomo) { /*completed another pomo*/
-					this.settings.sessionsCompleted += 1;
+					this.settings.totalPomosCompleted += 1;
+					this.pomosSinceStart += 1;
 				}
 				this.switchMode();
 			}
@@ -143,11 +146,15 @@ export default class PomoTimer extends Plugin {
 		return endTimeClone.diff(moment());
 	}
 
-	/*switch from pomos to breaks and vv., paused to unpaused long break not implemented*/
+	/*switch from pomos to long or short breaks as appropriate*/
 	switchMode(): void {
 		switch (this.mode) {
 			case (Mode.Pomo): {
-				this.mode = Mode.ShortBreak;
+				if (this.pomosSinceStart % this.settings.longBreakInterval === 0){
+					this.mode = Mode.LongBreak;
+				} else {
+					this.mode = Mode.ShortBreak;
+				}
 				this.startTimer(this.getTotalModeMillisecs());
 				break;
 			}
@@ -161,17 +168,28 @@ export default class PomoTimer extends Plugin {
 	}
 
 	/*Sends notification corresponding to whatever the mode is at the moment it's called*/
+	/*Don't like this repition here*/
 	modeStartingNotification(): void {
-		const minutes = Math.floor(this.getTotalModeMillisecs() / MILLISECS_IN_MINUTE);
+		var time = this.getTotalModeMillisecs();
+		var unit: string;
+		
+		if (time >= MILLISECS_IN_MINUTE) { /*display in minutes*/
+			time = Math.floor(time / MILLISECS_IN_MINUTE);
+			unit = "minute"
+		} else { /*less than a minute, display in seconds*/
+			time = Math.floor(time / 1000); //convert to secs
+			unit = "second"
+		}
+		
 		
 		switch (this.mode) {
 			case (Mode.Pomo): {
-				new Notice(`Starting ${minutes} minute pomodoro.`);
+				new Notice(`Starting ${time} ${unit} pomodoro.`);
 				break;
 			}
 			case (Mode.ShortBreak):
 			case (Mode.LongBreak): {
-				new Notice(`Starting ${minutes} minute short break.`);
+				new Notice(`Starting ${time} ${unit} break.`);
 				break;
 			}
 			case (Mode.NoTimer): {
@@ -182,7 +200,6 @@ export default class PomoTimer extends Plugin {
 	}
 
 	modeRestartingNotification(): void {
-		const minutes = Math.floor(this.pausedTime / MILLISECS_IN_MINUTE);
 		
 		switch (this.mode) {
 			case (Mode.Pomo): {
