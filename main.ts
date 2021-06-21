@@ -1,7 +1,6 @@
 import { Moment } from 'moment';
 import { App, Modal, Notice, Plugin, PluginSettingTab, Setting, moment } from 'obsidian';
 
-
 interface PomoSettings {
 	pomo: number;
 	shortBreak: number;
@@ -11,8 +10,8 @@ interface PomoSettings {
 }
 
 const DEFAULT_SETTINGS: PomoSettings = {
-	pomo: 1,
-	shortBreak: 2,
+	pomo: .5,
+	shortBreak: .2,
 	longBreak: 15,
 	longBreakInterval: 4,
 	sessionsCompleted: 0
@@ -22,93 +21,157 @@ enum Mode {
 	Pomo,
 	ShortBreak,
 	LongBreak,
-	NoTimer
+	NoTimer,
 }
+
+const MILLISECS_IN_MINUTE = 60 * 1000;
+
+
 
 export default class PomoTimer extends Plugin {
 	settings: PomoSettings;
 	statusBar: HTMLElement; /*why is it an HTML element? what does this mean? */
-	startTime: Moment;
-	endTime: Moment;
+	startTime: Moment; /*when currently running timer started*/
+	endTime: Moment;   /*when currently running timer will end if not paused*/
 	mode: Mode;
+	pausedTime: number;  /*Time left on paused timer, in milliseconds*/
+	paused: boolean;
 
 	async onload() {
-
-
 		console.log('Loading status bar pomo timer...');
 
 		await this.loadSettings();
 
 		this.statusBar = this.addStatusBarItem();
 		this.mode = Mode.NoTimer;
+		this.paused = false;
 
 		/*Adds icon to the left side bar which starts the pomo timer when clicked*/
-		/*if no timer is currently running, and otherwise restarts current timer*/
+		/*if no timer is currently running, and otherwise quits current timer*/
 		this.addRibbonIcon('clock', 'Start pomo', () => {
-			if (this.mode === Mode.NoTimer) {  /* otherwise just restart current session*/
+
+			if (this.mode === Mode.NoTimer) {  /*if starting from not having a timer running/paused*/
 				this.mode = Mode.Pomo;
-				this.modeStartingNotification();
-			} else {
-				this.modeRestartingNotification()
+				this.startTimer(this.getTotalModeMillisecs());
+			} else if (this.paused === true) { /*if paused, start*/
+				this.restartTimer();
+			} else if (this.paused === false) { /*if unpaused, pause*/
+				this.pauseTimer();
 			}
-			
-			this.startTime = moment();
-			this.endTime = moment().add(DEFAULT_SETTINGS.pomo, "minutes"); /*for some reason, works with moment().add() but not startTime.add()*/
 		});
 		
 		/*Update status bar timer ever half second*/
+		/*Ideally should change so only updating when in timer mode */
 		this.registerInterval(window.setInterval(() => 
 			this.statusBar.setText(this.setStatusBarText()), 500));
+	
+		this.addCommand({
+			id: 'quit-satusbar-pomo',
+			name: 'Pause Timer',
+			hotkeys: [ /*sets default hotkey - if no such property, hotkey left blank*/
+				{
+					modifiers: ["Shift"],
+					key: "q",
+				},
+			],
+			checkCallback: (checking: boolean) => {
+				let leaf = this.app.workspace.activeLeaf;
+				if (leaf) {
+					if (!checking) {
+						this.quitTimer();
+					}
+					return true;
+				}
+				return false;
+			}
+		});
+	}
 
+	quitTimer(): void {
+		this.mode = Mode.NoTimer;
+		this.startTime = moment(0); /*would be good to do this automatically on mode set*/
+		this.endTime = moment(0);		
+	}
+
+	pauseTimer(): void { /*currently implemented as quit*/
+		this.paused = true;
+		this.pausedTime = this.getCountdown();
+		new Notice("Timer paused.");
+		/*maybe reset start/end time? decide*/	
+		this.setStartEndTime(0);	
+	}
+
+	restartTimer(): void {
+		this.setStartEndTime(this.pausedTime);
+		this.modeRestartingNotification();
+		this.paused = false;
+	}
+
+	startTimer(millisecsLeft: number): void {
+		this.setStartEndTime(millisecsLeft);
+		this.modeStartingNotification();
+	}
+
+	setStartEndTime(millisecsLeft: number): void {
+		this.startTime = moment(); //start time to current time
+		this.endTime = moment().add(millisecsLeft, "milliseconds");
 	}
 
 	/*text is *not* set if no timer is running*/
 	setStatusBarText(): string {
 		if (this.mode !== Mode.NoTimer) {
-			if (moment().isSameOrAfter(this.endTime)) {
+			if (this.paused === true) {
+				return millisecsToString(this.pausedTime);
+			}
+			/*if reaching the end of the current timer, switch to the next one (e.g. pomo -> break*/
+			else if (moment().isSameOrAfter(this.endTime)) {
+				if (this.mode === Mode.Pomo) { /*completed another pomo*/
+					this.settings.sessionsCompleted += 1;
+				}
 				this.switchMode();
 			}
 
-			return this.getCountdown();
-		}
+			console.log(this.mode.toString());
+
+			return millisecsToString(this.getCountdown());
+		} 
 	}
 
-	/*Returns mm:ss, where mm is the number of minutes and ss is the number of seconds left on the current timer*/
-	getCountdown(): string {
-		const millisecsSinceStart = moment().diff(this.startTime)
-		const millisecCountDown = (this.totalModeTime() * 60 * 1000)- millisecsSinceStart
-		const formatedCountDown = moment.utc(millisecCountDown).format("mm:ss") /*NOTE: this one works with times <60 minutes*/
-		return formatedCountDown.toString()
+	/*Return milliseconds left until end of timer*/
+	getCountdown(): number {
+		var endTimeClone = this.endTime.clone(); //rewrite with freeze?
+		return endTimeClone.diff(moment());
 	}
 
-	/*switch from pomos to breaks and vv. long break not implemented*/
+	/*switch from pomos to breaks and vv., paused to unpaused long break not implemented*/
 	switchMode(): void {
-		if (this.mode === Mode.Pomo) {
-			this.mode = Mode.ShortBreak;
-		} else { /*switch to pomo from breaks and not having a timer*/
-			this.mode = Mode.Pomo;
+		switch (this.mode) {
+			case (Mode.Pomo): {
+				this.mode = Mode.ShortBreak;
+				this.startTimer(this.getTotalModeMillisecs());
+				break;
+			}
+			case (Mode.ShortBreak):
+			case (Mode.LongBreak): {
+				this.mode = Mode.Pomo; /*switch to pomo from any break*/
+				this.startTimer(this.getTotalModeMillisecs());
+				break;
+			}
 		}
-
-		this.startTime = moment()
-		this.endTime = moment().add(this.totalModeTime(), "minutes")
-		this.modeStartingNotification()
 	}
 
 	/*Sends notification corresponding to whatever the mode is at the moment it's called*/
 	modeStartingNotification(): void {
-		const time = this.totalModeTime();
+		const minutes = Math.floor(this.getTotalModeMillisecs() / MILLISECS_IN_MINUTE);
 		
 		switch (this.mode) {
 			case (Mode.Pomo): {
-				new Notice(`Starting ${time} minute pomodoro.`);
+				new Notice(`Starting ${minutes} minute pomodoro.`);
 				break;
 			}
-			case (Mode.ShortBreak): {
-				new Notice(`Starting ${time} minute short break.`);
-				break;
-			}
+			case (Mode.ShortBreak):
 			case (Mode.LongBreak): {
-				new Notice(`Starting ${time} minute long break.`);
+				new Notice(`Starting ${minutes} minute short break.`);
 				break;
 			}
 			case (Mode.NoTimer): {
@@ -119,36 +182,33 @@ export default class PomoTimer extends Plugin {
 	}
 
 	modeRestartingNotification(): void {
-		const time = this.totalModeTime();
+		const minutes = Math.floor(this.pausedTime / MILLISECS_IN_MINUTE);
 		
 		switch (this.mode) {
 			case (Mode.Pomo): {
-				new Notice(`Restarting ${time} minute pomodoro.`);
+				new Notice(`Restarting pomodoro.`);
 				break;
 			}
-			case (Mode.ShortBreak): {
-				new Notice(`Restarting ${time} minute short break.`);
-				break;
-			}
+			case (Mode.ShortBreak):
 			case (Mode.LongBreak): {
-				new Notice(`Restarting ${time} minute long break.`);
+				new Notice(`Restarting break.`);
 				break;
-			}
-			
+			}			
 		}
 	}
 
-	totalModeTime(): number {
+	getTotalModeMillisecs(): number {
 		switch (this.mode) {
 			case Mode.Pomo: {
-				return DEFAULT_SETTINGS.pomo;
+				return this.settings.pomo * MILLISECS_IN_MINUTE;
 			}
 			case Mode.ShortBreak: {
-				return DEFAULT_SETTINGS.shortBreak;
+				return this.settings.shortBreak * MILLISECS_IN_MINUTE;
 			}
 			case Mode.LongBreak: {
-				return DEFAULT_SETTINGS.longBreak;
+				return this.settings.longBreak * MILLISECS_IN_MINUTE;
 			}
+			/*handle Mode.NoTimer*/
 		}
 	}
 
@@ -164,3 +224,17 @@ export default class PomoTimer extends Plugin {
 		await this.saveData(this.settings);
 	}
 }
+
+/*Returns mm:ss, where mm is the number of minutes and ss is the number of seconds left on the current timer*/
+function millisecsToString(millisecs: number): string {
+	var formatedCountDown: string;
+	
+	if (millisecs >= 60 * 60 * 1000) { /* >= 1 hour*/
+		formatedCountDown = moment.utc(millisecs).format("HH:mm:ss");
+	} else {
+		formatedCountDown = moment.utc(millisecs).format("mm:ss");
+	}
+
+	return formatedCountDown.toString();
+}
+
