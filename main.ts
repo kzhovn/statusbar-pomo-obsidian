@@ -42,6 +42,7 @@ export default class PomoTimer extends Plugin {
 		console.log('Loading status bar pomo timer...');
 
 		await this.loadSettings();
+		this.addSettingTab(new PomoSettingTab(this.app, this));
 
 		this.statusBar = this.addStatusBarItem();
 		this.mode = Mode.NoTimer;
@@ -229,12 +230,13 @@ export default class PomoTimer extends Plugin {
 		}
 	}
 
+	//copied from sample, don't entirely understand
 	onunload() {
 		console.log('unloading plugin');
 	}
 
 	async loadSettings() {
-		this.settings = Object.assign({}, DEFAULT_SETTINGS);//, await this.loadData());
+		this.settings = Object.assign({}, DEFAULT_SETTINGS);//, await this.loadData()); //understand why removing this fixes default issue
 	}
 
 	async saveSettings() {
@@ -254,4 +256,38 @@ function millisecsToString(millisecs: number): string {
 
 	return formatedCountDown.toString();
 }
+
+class PomoSettingTab extends PluginSettingTab {
+	plugin: PomoTimer;
+
+	constructor(app: App, plugin: PomoTimer) {
+		super(app, plugin);
+		this.plugin = plugin;
+	}
+
+	display(): void {
+		let {containerEl} = this;
+
+		containerEl.empty();
+
+		containerEl.createEl('h2', {text: 'Status Bar Pomodoro Timer - Settings'});
+
+		new Setting(containerEl)
+			.setName('Pomodoro time (minutes)')
+			.setDesc("Set the pomodoro time, in minutes. Leave blank for default.")
+			.addText(text => text
+					.setValue(this.plugin.settings.pomo.toString())
+					.onChange(async value => {
+						if (value === "") { //empty string -> reset to default
+							this.plugin.settings.pomo = DEFAULT_SETTINGS.pomo;
+						} else if (!isNaN(Number(value)) && (Number(value) > 0)) { //if positive number, set setting
+							this.plugin.settings.pomo = Number(value);
+						} else { //invalid inpu
+							new Notice ("Please specify a valid number.");
+						}
+					}));
+	}
+
+}
+
 
