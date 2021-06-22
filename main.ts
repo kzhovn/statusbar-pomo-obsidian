@@ -225,7 +225,7 @@ export default class PomoTimer extends Plugin {
 			case Mode.LongBreak: {
 				return this.settings.longBreak * MILLISECS_IN_MINUTE;
 			}
-			/*handle Mode.NoTimer*/
+			/*handle Mode.NoTimer?*/
 		}
 	}
 
@@ -234,7 +234,7 @@ export default class PomoTimer extends Plugin {
 	}
 
 	async loadSettings() {
-		this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
+		this.settings = Object.assign({}, DEFAULT_SETTINGS);//, await this.loadData());
 	}
 
 	async saveSettings() {
