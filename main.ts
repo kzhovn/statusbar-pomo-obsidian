@@ -10,10 +10,10 @@ interface PomoSettings {
 }
 
 const DEFAULT_SETTINGS: PomoSettings = {
-	pomo: .5,
-	shortBreak: .2,
-	longBreak: 1,
-	longBreakInterval: 2,
+	pomo: 25,
+	shortBreak: 5,
+	longBreak: 15,
+	longBreakInterval: 4,
 	totalPomosCompleted: 0
 }
 
@@ -273,35 +273,31 @@ class PomoSettingTab extends PluginSettingTab {
 
 		new Setting(containerEl)
 			.setName('Pomodoro time (minutes)')
-			.setDesc("Set the pomodoro time, in minutes. Leave blank for default.")
+			.setDesc("Leave blank for default.")
 			.addText(text => text
 					.setValue(this.plugin.settings.pomo.toString())
 					.onChange(async value => {
-						if (value === "") { //empty string -> reset to default
-							this.plugin.settings.pomo = DEFAULT_SETTINGS.pomo;
-						} else if (!isNaN(Number(value)) && (Number(value) > 0)) { //if positive number, set setting
-							this.plugin.settings.pomo = Number(value);
-						} else { //invalid input
-							new Notice ("Please specify a valid number.");
-						}
+						this.plugin.settings.pomo = this.setTimerValue(value, "pomo");
 						this.plugin.saveSettings();
 					}));
 		new Setting(containerEl)
 			.setName('Short break time (minutes)')
-			.setDesc("Set the short break time, in minutes. Leave blank for default.")
+			.setDesc("Leave blank for default.")
 			.addText(text => text
 					.setValue(this.plugin.settings.shortBreak.toString())
 					.onChange(async value => {
-						this.setTimerValue(value, this.plugin.settings.shortBreak, DEFAULT_SETTINGS.shortBreak);
+						this.plugin.settings.shortBreak = this.setTimerValue(value, "shortBreak");
+						this.plugin.saveSettings();
 					}));
 
 		new Setting(containerEl)
 			.setName('Long break time (minutes)')
-			.setDesc("Set the long break time, in minutes. Leave blank for default.")
+			.setDesc("Leave blank for default.")
 			.addText(text => text
 					.setValue(this.plugin.settings.longBreak.toString())
 					.onChange(async value => {
-						this.setTimerValue(value, this.plugin.settings.longBreak, DEFAULT_SETTINGS.longBreak);
+						this.plugin.settings.longBreak = this.setTimerValue(value, "longBreak");
+						this.plugin.saveSettings();
 					}));
 
 		new Setting(containerEl)
@@ -310,20 +306,47 @@ class PomoSettingTab extends PluginSettingTab {
 			.addText(text => text
 					.setValue(this.plugin.settings.longBreakInterval.toString())
 					.onChange(async value => {
-						this.setTimerValue(value, this.plugin.settings.longBreakInterval, DEFAULT_SETTINGS.longBreakInterval);
+						this.plugin.settings.longBreakInterval = this.setTimerValue(value, "longBreakInterval");
+						this.plugin.saveSettings();
 					}));
 	}
 
 	//sets the setting for the given timer to value if valid, default if empty, otherwise sends user error notice
-	setTimerValue(value, timer_settings, timer_default: number): void { //not actually sure how exactly to phrase timer setting type
+	setTimerValue(value, timer_type: string): number { //not actually sure how exactly to phrase timer setting type
+		var timer_settings: number;
+		var timer_default: number;
+		
+		switch (timer_type) {
+			case ("pomo"): {
+				timer_settings = this.plugin.settings.pomo;
+				timer_default = DEFAULT_SETTINGS.pomo;
+				break;
+			}
+			case ("shortBreak"): {
+				timer_settings = this.plugin.settings.shortBreak;
+				timer_default = DEFAULT_SETTINGS.shortBreak;
+				break;
+			}
+			case ("longBreak"): {
+				timer_settings = this.plugin.settings.longBreak;
+				timer_default = DEFAULT_SETTINGS.longBreak;
+				break;
+			}
+			case ("longBreakInterval"): {
+				timer_settings = this.plugin.settings.longBreakInterval;
+				timer_default = DEFAULT_SETTINGS.longBreakInterval;
+				break;
+			}
+		}
+		
 		if (value === "") { //empty string -> reset to default
-			timer_settings = timer_default;
+			return timer_default;
 		} else if (!isNaN(Number(value)) && (Number(value) > 0)) { //if positive number, set setting
-			timer_settings = Number(value);
+			return Number(value);
 		} else { //invalid input
 			new Notice ("Please specify a valid number.");
+			return timer_settings;
 		}
-		this.plugin.saveSettings();
 	}
 
 }
