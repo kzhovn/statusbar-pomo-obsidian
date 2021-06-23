@@ -236,7 +236,7 @@ export default class PomoTimer extends Plugin {
 	}
 
 	async loadSettings() {
-		this.settings = Object.assign({}, DEFAULT_SETTINGS);//, await this.loadData()); //understand why removing this fixes default issue
+		this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData()); //understand why removing this fixes default issue
 	}
 
 	async saveSettings() {
@@ -282,9 +282,10 @@ class PomoSettingTab extends PluginSettingTab {
 							this.plugin.settings.pomo = DEFAULT_SETTINGS.pomo;
 						} else if (!isNaN(Number(value)) && (Number(value) > 0)) { //if positive number, set setting
 							this.plugin.settings.pomo = Number(value);
-						} else { //invalid inpu
+						} else { //invalid input
 							new Notice ("Please specify a valid number.");
 						}
+						this.plugin.saveSettings();
 					}));
 	}
 
