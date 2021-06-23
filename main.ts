@@ -26,8 +26,6 @@ enum Mode {
 
 const MILLISECS_IN_MINUTE = 60 * 1000;
 
-
-
 export default class PomoTimer extends Plugin {
 	settings: PomoSettings;
 	statusBar: HTMLElement; /*why is it an HTML element? what does this mean? */
@@ -257,6 +255,7 @@ function millisecsToString(millisecs: number): string {
 	return formatedCountDown.toString();
 }
 
+//todo break the settings out into their own file?
 class PomoSettingTab extends PluginSettingTab {
 	plugin: PomoTimer;
 
@@ -287,6 +286,44 @@ class PomoSettingTab extends PluginSettingTab {
 						}
 						this.plugin.saveSettings();
 					}));
+		new Setting(containerEl)
+			.setName('Short break time (minutes)')
+			.setDesc("Set the short break time, in minutes. Leave blank for default.")
+			.addText(text => text
+					.setValue(this.plugin.settings.shortBreak.toString())
+					.onChange(async value => {
+						this.setTimerValue(value, this.plugin.settings.shortBreak, DEFAULT_SETTINGS.shortBreak);
+					}));
+
+		new Setting(containerEl)
+			.setName('Long break time (minutes)')
+			.setDesc("Set the long break time, in minutes. Leave blank for default.")
+			.addText(text => text
+					.setValue(this.plugin.settings.longBreak.toString())
+					.onChange(async value => {
+						this.setTimerValue(value, this.plugin.settings.longBreak, DEFAULT_SETTINGS.longBreak);
+					}));
+
+		new Setting(containerEl)
+			.setName('Long break interval')
+			.setDesc("Number of pomos before a long break. Leave blank for default.")
+			.addText(text => text
+					.setValue(this.plugin.settings.longBreakInterval.toString())
+					.onChange(async value => {
+						this.setTimerValue(value, this.plugin.settings.longBreakInterval, DEFAULT_SETTINGS.longBreakInterval);
+					}));
+	}
+
+	//sets the setting for the given timer to value if valid, default if empty, otherwise sends user error notice
+	setTimerValue(value, timer_settings, timer_default: number): void { //not actually sure how exactly to phrase timer setting type
+		if (value === "") { //empty string -> reset to default
+			timer_settings = timer_default;
+		} else if (!isNaN(Number(value)) && (Number(value) > 0)) { //if positive number, set setting
+			timer_settings = Number(value);
+		} else { //invalid input
+			new Notice ("Please specify a valid number.");
+		}
+		this.plugin.saveSettings();
 	}
 
 }
