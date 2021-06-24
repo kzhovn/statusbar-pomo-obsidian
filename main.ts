@@ -65,10 +65,26 @@ export default class PomoTimer extends Plugin {
 		/*Ideally should change so only updating when in timer mode */
 		this.registerInterval(window.setInterval(() => 
 			this.statusBar.setText(this.setStatusBarText()), 500));
-	
+
+		this.addCommand({
+			id: 'start-satusbar-pomo',
+			name: 'Start pomodoro',
+			checkCallback: (checking: boolean) => {
+				let leaf = this.app.workspace.activeLeaf;
+				if (leaf) {
+					if (!checking) { //start pomo
+						this.mode = Mode.Pomo;
+						this.startTimer(this.getTotalModeMillisecs());
+					}
+					return true;
+				}
+				return false;
+			}
+		});
+
 		this.addCommand({
 			id: 'quit-satusbar-pomo',
-			name: 'Pause Timer',
+			name: 'Quit timer',
 			hotkeys: [ /*sets default hotkey - if no such property, hotkey left blank*/
 				{
 					modifiers: ["Shift"],
@@ -80,6 +96,25 @@ export default class PomoTimer extends Plugin {
 				if (leaf) {
 					if (!checking) {
 						this.quitTimer();
+					}
+					return true;
+				}
+				return false;
+			}
+		});
+
+		this.addCommand({
+			id: 'pause-satusbar-pomo',
+			name: 'Toggle timer pause',
+			checkCallback: (checking: boolean) => {
+				let leaf = this.app.workspace.activeLeaf;
+				if (leaf) {
+					if (!checking) {
+						if (this.paused) {
+							this.restartTimer();
+						} else if (this.mode !== Mode.NoTimer) { //if some timer running
+							this.pauseTimer();
+						}
 					}
 					return true;
 				}
