@@ -28,7 +28,7 @@ const MILLISECS_IN_MINUTE = 60 * 1000;
 
 export default class PomoTimer extends Plugin {
 	settings: PomoSettings;
-	statusBar: HTMLElement; /*why is it an HTML element? what does this mean? */
+	statusBar: HTMLElement;
 	startTime: Moment; /*when currently running timer started*/
 	endTime: Moment;   /*when currently running timer will end if not paused*/
 	mode: Mode;
@@ -47,22 +47,21 @@ export default class PomoTimer extends Plugin {
 		this.paused = false;
 		this.pomosSinceStart = 0;
 
-		/*Adds icon to the left side bar which starts the pomo timer when clicked*/
-		/*if no timer is currently running, and otherwise quits current timer*/
+		/*Adds icon to the left side bar which starts the pomo timer when clicked
+		  if no timer is currently running, and otherwise quits current timer*/
 		this.addRibbonIcon('clock', 'Start pomo', () => {
 
-			if (this.mode === Mode.NoTimer) {  /*if starting from not having a timer running/paused*/
-				this.mode = Mode.Pomo;
-				this.startTimer(this.getTotalModeMillisecs());
-			} else if (this.paused === true) { /*if paused, start*/
+			if (this.mode === Mode.NoTimer) {  //if starting from not having a timer running/paused
+				this.startTimer(Mode.Pomo);
+			} else if (this.paused === true) { //if paused, start
 				this.restartTimer();
-			} else if (this.paused === false) { /*if unpaused, pause*/
+			} else if (this.paused === false) { //if unpaused, pause
 				this.pauseTimer();
 			}
 		});
 		
-		/*Update status bar timer ever half second*/
-		/*Ideally should change so only updating when in timer mode */
+		/*Update status bar timer ever half second
+		  Ideally should change so only updating when in timer mode */
 		this.registerInterval(window.setInterval(() => 
 			this.statusBar.setText(this.setStatusBarText()), 500));
 
@@ -73,8 +72,7 @@ export default class PomoTimer extends Plugin {
 				let leaf = this.app.workspace.activeLeaf;
 				if (leaf) {
 					if (!checking) { //start pomo
-						this.mode = Mode.Pomo;
-						this.startTimer(this.getTotalModeMillisecs());
+						this.startTimer(Mode.Pomo);
 					}
 					return true;
 				}
@@ -85,7 +83,7 @@ export default class PomoTimer extends Plugin {
 		this.addCommand({
 			id: 'quit-satusbar-pomo',
 			name: 'Quit timer',
-			hotkeys: [ /*sets default hotkey - if no such property, hotkey left blank*/
+			hotkeys: [ //sets default hotkey - if no such property, hotkey left blank
 				{
 					modifiers: ["Shift"],
 					key: "q",
@@ -125,15 +123,15 @@ export default class PomoTimer extends Plugin {
 
 	quitTimer(): void {
 		this.mode = Mode.NoTimer;
-		this.startTime = moment(0); /*would be good to do this automatically on mode set*/
+		this.startTime = moment(0); //would be good to do this automatically on mode set
 		this.endTime = moment(0);		
 	}
 
-	pauseTimer(): void { /*currently implemented as quit*/
+	pauseTimer(): void { //currently implemented as quit
 		this.paused = true;
 		this.pausedTime = this.getCountdown();
 		new Notice("Timer paused.");
-		/*maybe reset start/end time? decide*/	
+		//maybe reset start/end time? decide
 		this.setStartEndTime(0);	
 	}
 
@@ -143,8 +141,9 @@ export default class PomoTimer extends Plugin {
 		this.paused = false;
 	}
 
-	startTimer(millisecsLeft: number): void {
-		this.setStartEndTime(millisecsLeft);
+	startTimer(mode: Mode): void {
+		this.mode = mode;
+		this.setStartEndTime(this.getTotalModeMillisecs());
 		this.modeStartingNotification();
 	}
 
@@ -185,24 +184,21 @@ export default class PomoTimer extends Plugin {
 		switch (this.mode) {
 			case (Mode.Pomo): {
 				if (this.pomosSinceStart % this.settings.longBreakInterval === 0){
-					this.mode = Mode.LongBreak;
+					this.startTimer(Mode.LongBreak);
 				} else {
-					this.mode = Mode.ShortBreak;
+					this.startTimer(Mode.ShortBreak);
 				}
-				this.startTimer(this.getTotalModeMillisecs());
 				break;
 			}
 			case (Mode.ShortBreak):
 			case (Mode.LongBreak): {
-				this.mode = Mode.Pomo; /*switch to pomo from any break*/
-				this.startTimer(this.getTotalModeMillisecs());
+				this.startTimer(Mode.Pomo);
 				break;
 			}
 		}
 	}
 
 	/*Sends notification corresponding to whatever the mode is at the moment it's called*/
-	/*Don't like this repition here*/
 	modeStartingNotification(): void {
 		var time = this.getTotalModeMillisecs();
 		var unit: string;
@@ -214,7 +210,6 @@ export default class PomoTimer extends Plugin {
 			time = Math.floor(time / 1000); //convert to secs
 			unit = "second"
 		}
-		
 		
 		switch (this.mode) {
 			case (Mode.Pomo): {
@@ -234,7 +229,6 @@ export default class PomoTimer extends Plugin {
 	}
 
 	modeRestartingNotification(): void {
-		
 		switch (this.mode) {
 			case (Mode.Pomo): {
 				new Notice(`Restarting pomodoro.`);
@@ -259,11 +253,10 @@ export default class PomoTimer extends Plugin {
 			case Mode.LongBreak: {
 				return this.settings.longBreak * MILLISECS_IN_MINUTE;
 			}
-			/*handle Mode.NoTimer?*/
+			//handle Mode.NoTimer?
 		}
 	}
 
-	//copied from sample, don't entirely understand
 	onunload() {
 		console.log('unloading plugin');
 	}
@@ -301,9 +294,7 @@ class PomoSettingTab extends PluginSettingTab {
 
 	display(): void {
 		let {containerEl} = this;
-
 		containerEl.empty();
-
 		containerEl.createEl('h2', {text: 'Status Bar Pomodoro Timer - Settings'});
 
 		new Setting(containerEl)
