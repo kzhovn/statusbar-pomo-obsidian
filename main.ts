@@ -1,5 +1,5 @@
 import { Moment } from 'moment';
-import { App, Modal, Notice, Plugin, PluginSettingTab, Setting, moment } from 'obsidian';
+import { App, Notice, Plugin, PluginSettingTab, Setting, moment } from 'obsidian';
 
 interface PomoSettings {
 	pomo: number;
@@ -85,8 +85,8 @@ export default class PomoTimer extends Plugin {
 			name: 'Quit timer',
 			hotkeys: [ //sets default hotkey - if no such property, hotkey left blank
 				{
-					modifiers: ["Shift"],
-					key: "q",
+					modifiers: ['Ctrl'],
+					key: 'q',
 				},
 			],
 			checkCallback: (checking: boolean) => {
@@ -130,7 +130,7 @@ export default class PomoTimer extends Plugin {
 	pauseTimer(): void { //currently implemented as quit
 		this.paused = true;
 		this.pausedTime = this.getCountdown();
-		new Notice("Timer paused.");
+		new Notice('Timer paused.');
 		//maybe reset start/end time? decide
 		this.setStartEndTime(0);	
 	}
@@ -149,7 +149,7 @@ export default class PomoTimer extends Plugin {
 
 	setStartEndTime(millisecsLeft: number): void {
 		this.startTime = moment(); //start time to current time
-		this.endTime = moment().add(millisecsLeft, "milliseconds");
+		this.endTime = moment().add(millisecsLeft, 'milliseconds');
 	}
 
 	/*text is *not* set if no timer is running*/
@@ -168,7 +168,6 @@ export default class PomoTimer extends Plugin {
 			}
 
 			console.log(this.mode.toString());
-
 			return millisecsToString(this.getCountdown());
 		} 
 	}
@@ -205,10 +204,10 @@ export default class PomoTimer extends Plugin {
 		
 		if (time >= MILLISECS_IN_MINUTE) { /*display in minutes*/
 			time = Math.floor(time / MILLISECS_IN_MINUTE);
-			unit = "minute"
+			unit = 'minute'
 		} else { /*less than a minute, display in seconds*/
 			time = Math.floor(time / 1000); //convert to secs
-			unit = "second"
+			unit = 'second'
 		}
 		
 		switch (this.mode) {
@@ -222,7 +221,7 @@ export default class PomoTimer extends Plugin {
 				break;
 			}
 			case (Mode.NoTimer): {
-				new Notice("Quitting pomodoro timer.");
+				new Notice('Quitting pomodoro timer.');
 				break;
 			}
 		}	
@@ -275,9 +274,9 @@ function millisecsToString(millisecs: number): string {
 	var formatedCountDown: string;
 	
 	if (millisecs >= 60 * 60 * 1000) { /* >= 1 hour*/
-		formatedCountDown = moment.utc(millisecs).format("HH:mm:ss");
+		formatedCountDown = moment.utc(millisecs).format('HH:mm:ss');
 	} else {
-		formatedCountDown = moment.utc(millisecs).format("mm:ss");
+		formatedCountDown = moment.utc(millisecs).format('mm:ss');
 	}
 
 	return formatedCountDown.toString();
@@ -299,40 +298,40 @@ class PomoSettingTab extends PluginSettingTab {
 
 		new Setting(containerEl)
 			.setName('Pomodoro time (minutes)')
-			.setDesc("Leave blank for default.")
+			.setDesc('Leave blank for default.')
 			.addText(text => text
 					.setValue(this.plugin.settings.pomo.toString())
 					.onChange(async value => {
-						this.plugin.settings.pomo = this.setTimerValue(value, "pomo");
+						this.plugin.settings.pomo = this.setTimerValue(value, 'pomo');
 						this.plugin.saveSettings();
 					}));
 		new Setting(containerEl)
 			.setName('Short break time (minutes)')
-			.setDesc("Leave blank for default.")
+			.setDesc('Leave blank for default.')
 			.addText(text => text
 					.setValue(this.plugin.settings.shortBreak.toString())
 					.onChange(async value => {
-						this.plugin.settings.shortBreak = this.setTimerValue(value, "shortBreak");
+						this.plugin.settings.shortBreak = this.setTimerValue(value, 'shortBreak');
 						this.plugin.saveSettings();
 					}));
 
 		new Setting(containerEl)
 			.setName('Long break time (minutes)')
-			.setDesc("Leave blank for default.")
+			.setDesc('Leave blank for default.')
 			.addText(text => text
 					.setValue(this.plugin.settings.longBreak.toString())
 					.onChange(async value => {
-						this.plugin.settings.longBreak = this.setTimerValue(value, "longBreak");
+						this.plugin.settings.longBreak = this.setTimerValue(value, 'longBreak');
 						this.plugin.saveSettings();
 					}));
 
 		new Setting(containerEl)
 			.setName('Long break interval')
-			.setDesc("Number of pomos before a long break. Leave blank for default.")
+			.setDesc('Number of pomos before a long break. Leave blank for default.')
 			.addText(text => text
 					.setValue(this.plugin.settings.longBreakInterval.toString())
 					.onChange(async value => {
-						this.plugin.settings.longBreakInterval = this.setTimerValue(value, "longBreakInterval");
+						this.plugin.settings.longBreakInterval = this.setTimerValue(value, 'longBreakInterval');
 						this.plugin.saveSettings();
 					}));
 	}
@@ -343,34 +342,34 @@ class PomoSettingTab extends PluginSettingTab {
 		var timer_default: number;
 		
 		switch (timer_type) {
-			case ("pomo"): {
+			case ('pomo'): {
 				timer_settings = this.plugin.settings.pomo;
 				timer_default = DEFAULT_SETTINGS.pomo;
 				break;
 			}
-			case ("shortBreak"): {
+			case ('shortBreak'): {
 				timer_settings = this.plugin.settings.shortBreak;
 				timer_default = DEFAULT_SETTINGS.shortBreak;
 				break;
 			}
-			case ("longBreak"): {
+			case ('longBreak'): {
 				timer_settings = this.plugin.settings.longBreak;
 				timer_default = DEFAULT_SETTINGS.longBreak;
 				break;
 			}
-			case ("longBreakInterval"): {
+			case ('longBreakInterval'): {
 				timer_settings = this.plugin.settings.longBreakInterval;
 				timer_default = DEFAULT_SETTINGS.longBreakInterval;
 				break;
 			}
 		}
 		
-		if (value === "") { //empty string -> reset to default
+		if (value === '') { //empty string -> reset to default
 			return timer_default;
 		} else if (!isNaN(Number(value)) && (Number(value) > 0)) { //if positive number, set setting
 			return Number(value);
 		} else { //invalid input
-			new Notice ("Please specify a valid number.");
+			new Notice ('Please specify a valid number.');
 			return timer_settings;
 		}
 	}
