@@ -1,21 +1,7 @@
 import { Moment } from 'moment';
-import { App, Notice, Plugin, PluginSettingTab, Setting, moment } from 'obsidian';
-
-interface PomoSettings {
-	pomo: number;
-	shortBreak: number;
-	longBreak: number;
-	longBreakInterval: number;
-	totalPomosCompleted: number;
-}
-
-const DEFAULT_SETTINGS: PomoSettings = {
-	pomo: 25,
-	shortBreak: 5,
-	longBreak: 15,
-	longBreakInterval: 4,
-	totalPomosCompleted: 0
-}
+import { Notice, Plugin, moment } from 'obsidian';
+import { PomoSettingTab, PomoSettings, DEFAULT_SETTINGS } from './src/settings';
+import { PomoStatsModal } from './src/stats'
 
 enum Mode {
 	Pomo,
@@ -50,7 +36,6 @@ export default class PomoTimer extends Plugin {
 		/*Adds icon to the left side bar which starts the pomo timer when clicked
 		  if no timer is currently running, and otherwise quits current timer*/
 		this.addRibbonIcon('clock', 'Start pomo', () => {
-
 			if (this.mode === Mode.NoTimer) {  //if starting from not having a timer running/paused
 				this.startTimer(Mode.Pomo);
 			} else if (this.paused === true) { //if paused, start
@@ -119,6 +104,22 @@ export default class PomoTimer extends Plugin {
 				return false;
 			}
 		});
+
+		this.addCommand({
+			id: 'satusbar-pomo-stats',
+			name: 'Open pomodoro stats',
+			checkCallback: (checking: boolean) => {
+				let leaf = this.app.workspace.activeLeaf;
+				if (leaf) {
+					if (!checking) {
+						new PomoStatsModal(this.app, this).open();
+					}
+					return true;
+				}
+				return false;
+			}
+
+		});
 	}
 
 	quitTimer(): void {
@@ -131,8 +132,7 @@ export default class PomoTimer extends Plugin {
 		this.paused = true;
 		this.pausedTime = this.getCountdown();
 		new Notice('Timer paused.');
-		//maybe reset start/end time? decide
-		this.setStartEndTime(0);	
+		this.setStartEndTime(0); //reset start/end time (to start of unix epoch)
 	}
 
 	restartTimer(): void {
@@ -280,100 +280,6 @@ function millisecsToString(millisecs: number): string {
 	}
 
 	return formatedCountDown.toString();
-}
-
-//todo break the settings out into their own file?
-class PomoSettingTab extends PluginSettingTab {
-	plugin: PomoTimer;
-
-	constructor(app: App, plugin: PomoTimer) {
-		super(app, plugin);
-		this.plugin = plugin;
-	}
-
-	display(): void {
-		let {containerEl} = this;
-		containerEl.empty();
-		containerEl.createEl('h2', {text: 'Status Bar Pomodoro Timer - Settings'});
-
-		new Setting(containerEl)
-			.setName('Pomodoro time (minutes)')
-			.setDesc('Leave blank for default.')
-			.addText(text => text
-					.setValue(this.plugin.settings.pomo.toString())
-					.onChange(async value => {
-						this.plugin.settings.pomo = this.setTimerValue(value, 'pomo');
-						this.plugin.saveSettings();
-					}));
-		new Setting(containerEl)
-			.setName('Short break time (minutes)')
-			.setDesc('Leave blank for default.')
-			.addText(text => text
-					.setValue(this.plugin.settings.shortBreak.toString())
-					.onChange(async value => {
-						this.plugin.settings.shortBreak = this.setTimerValue(value, 'shortBreak');
-						this.plugin.saveSettings();
-					}));
-
-		new Setting(containerEl)
-			.setName('Long break time (minutes)')
-			.setDesc('Leave blank for default.')
-			.addText(text => text
-					.setValue(this.plugin.settings.longBreak.toString())
-					.onChange(async value => {
-						this.plugin.settings.longBreak = this.setTimerValue(value, 'longBreak');
-						this.plugin.saveSettings();
-					}));
-
-		new Setting(containerEl)
-			.setName('Long break interval')
-			.setDesc('Number of pomos before a long break. Leave blank for default.')
-			.addText(text => text
-					.setValue(this.plugin.settings.longBreakInterval.toString())
-					.onChange(async value => {
-						this.plugin.settings.longBreakInterval = this.setTimerValue(value, 'longBreakInterval');
-						this.plugin.saveSettings();
-					}));
-	}
-
-	//sets the setting for the given timer to value if valid, default if empty, otherwise sends user error notice
-	setTimerValue(value, timer_type: string): number { //not actually sure how exactly to phrase timer setting type
-		var timer_settings: number;
-		var timer_default: number;
-		
-		switch (timer_type) {
-			case ('pomo'): {
-				timer_settings = this.plugin.settings.pomo;
-				timer_default = DEFAULT_SETTINGS.pomo;
-				break;
-			}
-			case ('shortBreak'): {
-				timer_settings = this.plugin.settings.shortBreak;
-				timer_default = DEFAULT_SETTINGS.shortBreak;
-				break;
-			}
-			case ('longBreak'): {
-				timer_settings = this.plugin.settings.longBreak;
-				timer_default = DEFAULT_SETTINGS.longBreak;
-				break;
-			}
-			case ('longBreakInterval'): {
-				timer_settings = this.plugin.settings.longBreakInterval;
-				timer_default = DEFAULT_SETTINGS.longBreakInterval;
-				break;
-			}
-		}
-		
-		if (value === '') { //empty string -> reset to default
-			return timer_default;
-		} else if (!isNaN(Number(value)) && (Number(value) > 0)) { //if positive number, set setting
-			return Number(value);
-		} else { //invalid input
-			new Notice ('Please specify a valid number.');
-			return timer_settings;
-		}
-	}
-
 }
 
 
