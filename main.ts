@@ -168,7 +168,6 @@ export default class PomoTimer extends Plugin {
 				this.switchMode();
 			}
 
-			console.log(this.mode.toString());
 			return millisecsToString(this.getCountdown());
 		} 
 	}
