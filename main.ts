@@ -162,6 +162,7 @@ export default class PomoTimer extends Plugin {
 			else if (moment().isSameOrAfter(this.endTime)) {
 				if (this.mode === Mode.Pomo) { /*completed another pomo*/
 					this.settings.totalPomosCompleted += 1;
+					this.saveSettings();
 					this.pomosSinceStart += 1;
 				}
 				this.switchMode();
