@@ -1,5 +1,5 @@
 import { App, Notice, PluginSettingTab, Setting } from 'obsidian';
-import PomoTimer from '../main';
+import PomoTimer from './main';
 
 export interface PomoSettings {
 	pomo: number;
@@ -7,6 +7,7 @@ export interface PomoSettings {
 	longBreak: number;
 	longBreakInterval: number;
 	totalPomosCompleted: number;
+	notificationSound: boolean;
 }
 
 export const DEFAULT_SETTINGS: PomoSettings = {
@@ -14,7 +15,8 @@ export const DEFAULT_SETTINGS: PomoSettings = {
 	shortBreak: 5,
 	longBreak: 15,
 	longBreakInterval: 4,
-	totalPomosCompleted: 0
+	totalPomosCompleted: 0,
+	notificationSound: true,
 }
 
 export class PomoSettingTab extends PluginSettingTab {
@@ -68,6 +70,17 @@ export class PomoSettingTab extends PluginSettingTab {
 					this.plugin.settings.longBreakInterval = this.setTimerValue(value, 'longBreakInterval');
 					this.plugin.saveSettings();
 				}));
+
+		new Setting(containerEl)
+			.setName('Notification sound')
+			.setDesc('Play notification sound at the end of each pomo and break.')
+			.addToggle(toggle => toggle
+					.setValue(this.plugin.settings.notificationSound)
+					.onChange(value => {
+						this.plugin.settings.notificationSound = value;
+						this.plugin.saveSettings();
+					})
+			)
 	}
 
 	//sets the setting for the given timer to value if valid, default if empty, otherwise sends user error notice

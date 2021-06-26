@@ -1,5 +1,5 @@
 import { Modal, App } from 'obsidian';
-import PomoTimer from '../main';
+import PomoTimer from './main';
 
 export class PomoStatsModal extends Modal {
     plugin: PomoTimer;

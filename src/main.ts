@@ -1,8 +1,8 @@
 import { readFileSync } from 'fs';
 import { Moment } from 'moment';
 import { Notice, Plugin, moment } from 'obsidian';
-import { PomoSettingTab, PomoSettings, DEFAULT_SETTINGS } from './src/settings';
-import { PomoStatsModal } from './src/stats'
+import { PomoSettingTab, PomoSettings, DEFAULT_SETTINGS } from './settings';
+import { PomoStatsModal } from './stats'
 
 enum Mode {
 	Pomo,
@@ -181,7 +181,10 @@ export default class PomoTimer extends Plugin {
 
 	/*switch from pomos to long or short breaks as appropriate*/
 	switchMode(): void {
-		playSound();
+		if (this.settings.notificationSound) { //play sound end of timer
+			playSound();
+		}
+
 		switch (this.mode) {
 			case (Mode.Pomo): {
 				if (this.pomosSinceStart % this.settings.longBreakInterval === 0){
