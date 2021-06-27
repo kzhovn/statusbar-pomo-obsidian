@@ -1,7 +1,7 @@
 {
-  "name": "obsidian-sample-plugin",
-  "version": "0.12.0",
-  "description": "This is a sample plugin for Obsidian (https://obsidian.md)",
+  "name": "obsidian-statusbar-pomo",
+  "version": "0.2.0",
+  "description": "Adds a pomodoro timer to your status bar.np",
   "main": "main.js",
   "scripts": {
     "dev": "rollup --config rollup.config.js -w",
@@ -19,8 +19,5 @@
     "rollup": "^2.32.1",
     "tslib": "^2.2.0",
     "typescript": "^4.2.4"
-  },
-  "dependencies": {
-    "frozen-moment": "^0.4.0"
   }
 }
