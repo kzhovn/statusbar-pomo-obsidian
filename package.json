@@ -1,6 +1,6 @@
 {
   "name": "obsidian-statusbar-pomo",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Adds a pomodoro timer to your status bar.np",
   "main": "main.js",
   "scripts": {
