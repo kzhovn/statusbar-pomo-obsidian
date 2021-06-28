@@ -1,5 +1,3 @@
-import { readFileSync } from 'fs';
-import { Moment } from 'moment';
 import { Notice, Plugin, moment } from 'obsidian';
 import { PomoSettingTab, PomoSettings, DEFAULT_SETTINGS } from './settings';
 import { PomoStatsModal } from './stats'
@@ -69,12 +67,6 @@ export default class PomoTimer extends Plugin {
 		this.addCommand({
 			id: 'quit-satusbar-pomo',
 			name: 'Quit timer',
-			hotkeys: [ //sets default hotkey - if no such property, hotkey left blank
-				{
-					modifiers: ['Ctrl'],
-					key: 'q',
-				},
-			],
 			checkCallback: (checking: boolean) => {
 				let leaf = this.app.workspace.activeLeaf;
 				if (leaf) {

@@ -5,11 +5,13 @@ Simple plugin that displays a [pomodoro timer](https://en.wikipedia.org/wiki/Pom
 ![timer screenshot](timer_screenshot.png)
 
 ## Use
-Click the clock icon in the left ribbon pannel to start. Click again to toggle pause. Press `Ctrl-Q` to quit. 
+Click the clock icon in the left ribbon pannel to start. Click again to toggle pause.
 
-All of these actions are available from the command pallete.
+All of these actions are available from the command pallete. You can also set a hotkey to quit the timer.
 
-You can change the duration of the pomodoro timer, breaks, and interval between long breaks in the settings, and toggle the end of timer sound.
+## Settings
+
+You can change the duration of the pomodoro timer, breaks, and interval between long breaks, and toggle the end of timer sound.
 
 ## Compatability
 Only tested on Linux, but should work fine on Windows and Mac as well.
