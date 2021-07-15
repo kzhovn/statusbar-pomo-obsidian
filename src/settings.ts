@@ -113,9 +113,9 @@ export class PomoSettingTab extends PluginSettingTab {
 			.setName('Log file name')
 			.addText(text => text
 				.setValue(this.plugin.settings.logFile.toString())
-				.onChange(async value => {
+				.onChange(value => {
 					const logFile = this.app.vault.getAbstractFileByPath(this.plugin.settings.logFile);
-					await this.app.vault.rename(logFile, value);
+					this.app.vault.rename(logFile, value);
 
 					this.plugin.settings.logFile = value;
 					this.plugin.saveSettings();

@@ -1,4 +1,4 @@
-import { Notice, Plugin, moment } from 'obsidian';
+import { Notice, Plugin, moment. TFile } from 'obsidian';
 import { PomoSettingTab, PomoSettings, DEFAULT_SETTINGS } from './settings';
 import { PomoStatsModal } from './stats'
 import type {Moment} from 'moment';
@@ -158,6 +158,10 @@ export default class PomoTimer extends Plugin {
 					this.settings.totalPomosCompleted += 1;
 					this.saveSettings();
 					this.pomosSinceStart += 1;
+
+					if (this.settings.logging === true) {
+						this.logPomo();
+					}
 				}
 				this.switchMode();
 			}
@@ -174,7 +178,7 @@ export default class PomoTimer extends Plugin {
 
 	/*switch from pomos to long or short breaks as appropriate*/
 	switchMode(): void {
-		if (this.settings.notificationSound) { //play sound end of timer
+		if (this.settings.notificationSound === true) { //play sound end of timer
 			playSound();
 		}
 
@@ -253,6 +257,29 @@ export default class PomoTimer extends Plugin {
 			//handle Mode.NoTimer?
 		}
 	}
+
+	logPomo(): void {
+		const file = this.app.vault.getAbstractFileByPath(this.settings.logFile);
+		const timestamp = moment();
+
+		if (file instanceof TFile) {
+			this.appendFile(this.settings.logFile, `🍅 ${timestamp}`);
+		} else if (!file) {
+		  	//file does not exist, deal wtih this
+		} else {
+		  	//file is not in fact file (ie folder), deal with this
+		}
+	}
+
+	//Note Refactor plugin
+	async appendFile(filePath: string, note: string) {
+		let existingContent = await this.app.vault.adapter.read(filePath);
+		if(existingContent.length > 0) {
+		  existingContent = existingContent + '\r';
+		}
+		await this.app.vault.adapter.write(filePath, existingContent + note);
+	  }
+	  
 
 	onunload() {
 		console.log('unloading plugin');
