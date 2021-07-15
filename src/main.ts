@@ -260,10 +260,10 @@ export default class PomoTimer extends Plugin {
 
 	logPomo(): void {
 		const file = this.app.vault.getAbstractFileByPath(this.settings.logFile);
-		const timestamp = moment();
+		const logText = moment().format(this.settings.logText);
 
 		if (file instanceof TFile) {
-			this.appendFile(this.settings.logFile, `🍅 ${timestamp}`);
+			this.appendFile(this.settings.logFile, logText);
 		} else if (!file) {
 		  	//file does not exist, deal wtih this
 		} else {

@@ -1,4 +1,4 @@
-import { App, Notice, PluginSettingTab, Setting, TFile, Vault } from 'obsidian';
+import { App, Notice, PluginSettingTab, Setting, TFile } from 'obsidian';
 import PomoTimer from './main';
 
 export interface PomoSettings {
@@ -10,6 +10,7 @@ export interface PomoSettings {
 	notificationSound: boolean;
 	logging: boolean;
 	logFile: string;
+	logText: string;
 }
 
 export const DEFAULT_SETTINGS: PomoSettings = {
@@ -20,7 +21,8 @@ export const DEFAULT_SETTINGS: PomoSettings = {
 	totalPomosCompleted: 0,
 	notificationSound: true,
 	logging: false,
-	logFile: "Pomodoro Log.md"
+	logFile: "Pomodoro Log.md",
+	logText: "[🍅] dddd, MMMM DD YYYY, h:mm A",
 }
 
 export class PomoSettingTab extends PluginSettingTab {
@@ -88,38 +90,48 @@ export class PomoSettingTab extends PluginSettingTab {
 			)
 
 		new Setting(containerEl)
-		.setName('Logging')
-		.setDesc('Enable a log of completed pomodoros')
-		.addToggle(toggle => toggle
-				.setValue(this.plugin.settings.logging)
-				.onChange(async value => {
-					this.plugin.settings.logging = value;
-					this.plugin.saveSettings();
+			.setName('Logging')
+			.setDesc('Enable a log of completed pomodoros')
+			.addToggle(toggle => toggle
+					.setValue(this.plugin.settings.logging)
+					.onChange(async value => {
+						this.plugin.settings.logging = value;
+						this.plugin.saveSettings();
 
-					if (this.plugin.settings.logging) { //if just enabled, create/confirm file exists
-						const logFile = this.app.vault.getAbstractFileByPath(this.plugin.settings.logFile);
+						if (this.plugin.settings.logging) { //if just enabled, create/confirm file exists
+							const logFile = this.app.vault.getAbstractFileByPath(this.plugin.settings.logFile);
 
-						if (!logFile || logFile !instanceof TFile) { // doesn't exist or folder -> create
-							await this.app.vault.create(this.plugin.settings.logFile, "");
+							if (!logFile || logFile !instanceof TFile) { // doesn't exist or folder -> create
+								await this.app.vault.create(this.plugin.settings.logFile, "");
+							}
 						}
-					}
-				})
+					})
 		)
 
 		//various logging settings; only show if logging is enabled
 		if (this.plugin.settings.logging) {
 
 			new Setting(containerEl)
-			.setName('Log file name')
-			.addText(text => text
-				.setValue(this.plugin.settings.logFile.toString())
-				.onChange(value => {
-					const logFile = this.app.vault.getAbstractFileByPath(this.plugin.settings.logFile);
-					this.app.vault.rename(logFile, value);
+				.setName('Log file name')
+				.addText(text => text
+					.setValue(this.plugin.settings.logFile.toString())
+					.onChange(value => {
+						const logFile = this.app.vault.getAbstractFileByPath(this.plugin.settings.logFile);
+						this.app.vault.rename(logFile, value);
 
-					this.plugin.settings.logFile = value;
-					this.plugin.saveSettings();
-				}));
+						this.plugin.settings.logFile = value;
+						this.plugin.saveSettings();
+					}));
+
+			new Setting(containerEl)
+				.setName('Timestamp Format')
+				.setDesc('Specify format for the logtext in moment syntax')
+				.addMomentFormat(text => text
+					.setDefaultFormat(this.plugin.settings.logText)
+					.onChange(value => {
+						this.plugin.settings.logText = value;
+						this.plugin.saveSettings();
+					}));
 
 		}
 
