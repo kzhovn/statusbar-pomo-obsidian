@@ -97,19 +97,21 @@ export class PomoSettingTab extends PluginSettingTab {
 					.onChange(async value => {
 						this.plugin.settings.logging = value;
 						this.plugin.saveSettings();
+						this.display(); //force refresh
 
-						if (this.plugin.settings.logging) { //if just enabled, create/confirm file exists
+						if (this.plugin.settings.logging === true) { //if just enabled, create/confirm file exists
 							const logFile = this.app.vault.getAbstractFileByPath(this.plugin.settings.logFile);
 
 							if (!logFile || logFile !instanceof TFile) { // doesn't exist or folder -> create
 								await this.app.vault.create(this.plugin.settings.logFile, "");
 							}
 						}
+
 					})
 		)
 
-		//various logging settings; only show if logging is enabled
-		if (this.plugin.settings.logging) {
+		//various logging settings; only show if logging is enabled (currently does not autohide, only)
+		if (this.plugin.settings.logging === true) {
 
 			new Setting(containerEl)
 				.setName('Log file name')
