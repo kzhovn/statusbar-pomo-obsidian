@@ -1,4 +1,4 @@
-import { App, Notice, PluginSettingTab, Setting } from 'obsidian';
+import { App, Notice, PluginSettingTab, Setting, TFile, Vault } from 'obsidian';
 import PomoTimer from './main';
 
 export interface PomoSettings {
@@ -8,6 +8,8 @@ export interface PomoSettings {
 	longBreakInterval: number;
 	totalPomosCompleted: number;
 	notificationSound: boolean;
+	logging: boolean;
+	logFile: string;
 }
 
 export const DEFAULT_SETTINGS: PomoSettings = {
@@ -17,6 +19,8 @@ export const DEFAULT_SETTINGS: PomoSettings = {
 	longBreakInterval: 4,
 	totalPomosCompleted: 0,
 	notificationSound: true,
+	logging: false,
+	logFile: "Pomodoro Log.md"
 }
 
 export class PomoSettingTab extends PluginSettingTab {
@@ -37,16 +41,17 @@ export class PomoSettingTab extends PluginSettingTab {
 			.setDesc('Leave blank for default.')
 			.addText(text => text
 				.setValue(this.plugin.settings.pomo.toString())
-				.onChange(async (value) => {
+				.onChange(value => {
 					this.plugin.settings.pomo = this.setTimerValue(value, 'pomo');
 					this.plugin.saveSettings();
 				}));
+
 		new Setting(containerEl)
 			.setName('Short break time (minutes)')
 			.setDesc('Leave blank for default.')
 			.addText(text => text
 				.setValue(this.plugin.settings.shortBreak.toString())
-				.onChange(async (value) => {
+				.onChange(value => {
 					this.plugin.settings.shortBreak = this.setTimerValue(value, 'shortBreak');
 					this.plugin.saveSettings();
 				}));
@@ -56,7 +61,7 @@ export class PomoSettingTab extends PluginSettingTab {
 			.setDesc('Leave blank for default.')
 			.addText(text => text
 				.setValue(this.plugin.settings.longBreak.toString())
-				.onChange(async (value) => {
+				.onChange(value => {
 					this.plugin.settings.longBreak = this.setTimerValue(value, 'longBreak');
 					this.plugin.saveSettings();
 				}));
@@ -66,7 +71,7 @@ export class PomoSettingTab extends PluginSettingTab {
 			.setDesc('Number of pomos before a long break. Leave blank for default.')
 			.addText(text => text
 				.setValue(this.plugin.settings.longBreakInterval.toString())
-				.onChange(async (value) => {
+				.onChange(value => {
 					this.plugin.settings.longBreakInterval = this.setTimerValue(value, 'longBreakInterval');
 					this.plugin.saveSettings();
 				}));
@@ -81,6 +86,43 @@ export class PomoSettingTab extends PluginSettingTab {
 						this.plugin.saveSettings();
 					})
 			)
+
+		new Setting(containerEl)
+		.setName('Logging')
+		.setDesc('Enable a log of completed pomodoros')
+		.addToggle(toggle => toggle
+				.setValue(this.plugin.settings.logging)
+				.onChange(async value => {
+					this.plugin.settings.logging = value;
+					this.plugin.saveSettings();
+
+					if (this.plugin.settings.logging) { //if just enabled, create/confirm file exists
+						const logFile = this.app.vault.getAbstractFileByPath(this.plugin.settings.logFile);
+
+						if (!logFile || logFile !instanceof TFile) { // doesn't exist or folder -> create
+							await this.app.vault.create(this.plugin.settings.logFile, "");
+						}
+					}
+				})
+		)
+
+		//various logging settings; only show if logging is enabled
+		if (this.plugin.settings.logging) {
+
+			new Setting(containerEl)
+			.setName('Log file name')
+			.addText(text => text
+				.setValue(this.plugin.settings.logFile.toString())
+				.onChange(async value => {
+					const logFile = this.app.vault.getAbstractFileByPath(this.plugin.settings.logFile);
+					await this.app.vault.rename(logFile, value);
+
+					this.plugin.settings.logFile = value;
+					this.plugin.saveSettings();
+				}));
+
+		}
+
 	}
 
 	//sets the setting for the given timer to value if valid, default if empty, otherwise sends user error notice

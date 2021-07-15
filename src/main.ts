@@ -1,6 +1,7 @@
 import { Notice, Plugin, moment } from 'obsidian';
 import { PomoSettingTab, PomoSettings, DEFAULT_SETTINGS } from './settings';
 import { PomoStatsModal } from './stats'
+import type {Moment} from 'moment';
 
 enum Mode {
 	Pomo,
