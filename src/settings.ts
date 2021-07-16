@@ -98,15 +98,6 @@ export class PomoSettingTab extends PluginSettingTab {
 						this.plugin.settings.logging = value;
 						this.plugin.saveSettings();
 						this.display(); //force refresh
-
-						if (this.plugin.settings.logging === true) { //if just enabled, create/confirm file exists
-							const logFile = this.app.vault.getAbstractFileByPath(this.plugin.settings.logFile);
-
-							if (!logFile || logFile !instanceof TFile) { // doesn't exist or folder -> create
-								await this.app.vault.create(this.plugin.settings.logFile, "");
-							}
-						}
-
 					})
 		)
 
@@ -114,20 +105,18 @@ export class PomoSettingTab extends PluginSettingTab {
 		if (this.plugin.settings.logging === true) {
 
 			new Setting(containerEl)
-				.setName('Log file name')
+				.setName('Log file')
+				.setDesc(`If file doesn't already exist, it will be created. Leave blank for current file, ${this.plugin.settings.logFile}.`)
 				.addText(text => text
 					.setValue(this.plugin.settings.logFile.toString())
 					.onChange(value => {
-						const logFile = this.app.vault.getAbstractFileByPath(this.plugin.settings.logFile);
-						this.app.vault.rename(logFile, value);
-
 						this.plugin.settings.logFile = value;
 						this.plugin.saveSettings();
 					}));
 
 			new Setting(containerEl)
 				.setName('Timestamp Format')
-				.setDesc('Specify format for the logtext in moment syntax')
+				.setDesc('Specify format for the logtext using moment syntax')
 				.addMomentFormat(text => text
 					.setDefaultFormat(this.plugin.settings.logText)
 					.onChange(value => {

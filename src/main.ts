@@ -1,4 +1,4 @@
-import { Notice, Plugin, moment. TFile } from 'obsidian';
+import { Notice, Plugin, moment, TFile } from 'obsidian';
 import { PomoSettingTab, PomoSettings, DEFAULT_SETTINGS } from './settings';
 import { PomoStatsModal } from './stats'
 import type {Moment} from 'moment';
@@ -258,17 +258,16 @@ export default class PomoTimer extends Plugin {
 		}
 	}
 
-	logPomo(): void {
+	async logPomo(): Promise<void> {
 		const file = this.app.vault.getAbstractFileByPath(this.settings.logFile);
 		const logText = moment().format(this.settings.logText);
 
-		if (file instanceof TFile) {
-			this.appendFile(this.settings.logFile, logText);
-		} else if (!file) {
-		  	//file does not exist, deal wtih this
-		} else {
-		  	//file is not in fact file (ie folder), deal with this
+		if (!file || file !instanceof TFile) { //if no file, create
+			await this.app.vault.create(this.settings.logFile, "");
 		}
+		
+		await this.appendFile(this.settings.logFile, logText);
+		
 	}
 
 	//Note Refactor plugin
