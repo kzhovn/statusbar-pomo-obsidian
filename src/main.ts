@@ -1,7 +1,8 @@
-import { Notice, Plugin, moment, TFile } from 'obsidian';
+import { Notice, Plugin, moment, TFile, TAbstractFile } from 'obsidian';
 import { PomoSettingTab, PomoSettings, DEFAULT_SETTINGS } from './settings';
 import { PomoStatsModal } from './stats'
 import type {Moment} from 'moment';
+import { getAllDailyNotes, getDailyNote } from 'obsidian-daily-notes-interface'
 
 enum Mode {
 	Pomo,
@@ -261,8 +262,12 @@ export default class PomoTimer extends Plugin {
 	async logPomo(): Promise<void> {
 		const file = this.app.vault.getAbstractFileByPath(this.settings.logFile);
 		const logText = moment().format(this.settings.logText);
+		console.log(file)
+		console.log(file instanceof TAbstractFile)
 
-		if (!file || file !instanceof TFile) { //if no file, create
+		//this is a sin, please fix it so that it checks for being a folder without doing terrible things
+		if (!file) { //if no file, create
+			console.log("Creating file")
 			await this.app.vault.create(this.settings.logFile, "");
 		}
 		

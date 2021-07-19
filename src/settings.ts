@@ -1,4 +1,5 @@
-import { App, Notice, PluginSettingTab, Setting, TFile } from 'obsidian';
+import { App, Notice, PluginSettingTab, Setting } from 'obsidian';
+import { appHasDailyNotesPluginLoaded } from 'obsidian-daily-notes-interface';
 import PomoTimer from './main';
 
 export interface PomoSettings {
@@ -9,6 +10,7 @@ export interface PomoSettings {
 	totalPomosCompleted: number;
 	notificationSound: boolean;
 	logging: boolean;
+	logToDaily: boolean;
 	logFile: string;
 	logText: string;
 }
@@ -21,6 +23,7 @@ export const DEFAULT_SETTINGS: PomoSettings = {
 	totalPomosCompleted: 0,
 	notificationSound: true,
 	logging: false,
+	logToDaily: false,
 	logFile: "Pomodoro Log.md",
 	logText: "[🍅] dddd, MMMM DD YYYY, h:mm A",
 }
@@ -86,8 +89,7 @@ export class PomoSettingTab extends PluginSettingTab {
 					.onChange(value => {
 						this.plugin.settings.notificationSound = value;
 						this.plugin.saveSettings();
-					})
-			)
+					}));
 
 		new Setting(containerEl)
 			.setName('Logging')
@@ -98,8 +100,7 @@ export class PomoSettingTab extends PluginSettingTab {
 						this.plugin.settings.logging = value;
 						this.plugin.saveSettings();
 						this.display(); //force refresh
-					})
-		)
+					}));
 
 		//various logging settings; only show if logging is enabled (currently does not autohide, only)
 		if (this.plugin.settings.logging === true) {
