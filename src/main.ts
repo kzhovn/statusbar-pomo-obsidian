@@ -1,8 +1,7 @@
-import { Notice, Plugin, moment, TFile, TAbstractFile } from 'obsidian';
+import { Notice, Plugin, moment, TAbstractFile } from 'obsidian';
 import { PomoSettingTab, PomoSettings, DEFAULT_SETTINGS } from './settings';
 import { PomoStatsModal } from './stats'
 import type {Moment} from 'moment';
-import { getAllDailyNotes, getDailyNote } from 'obsidian-daily-notes-interface'
 
 enum Mode {
 	Pomo,

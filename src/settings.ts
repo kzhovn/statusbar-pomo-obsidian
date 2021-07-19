@@ -1,5 +1,4 @@
 import { App, Notice, PluginSettingTab, Setting } from 'obsidian';
-import { appHasDailyNotesPluginLoaded } from 'obsidian-daily-notes-interface';
 import PomoTimer from './main';
 
 export interface PomoSettings {
