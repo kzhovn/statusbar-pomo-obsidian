@@ -29,6 +29,8 @@ export default class PomoTimer extends Plugin {
 		this.addSettingTab(new PomoSettingTab(this.app, this));
 
 		this.statusBar = this.addStatusBarItem();
+		this.statusBar.addClass("statusbar-pomo")
+		
 		this.mode = Mode.NoTimer;
 		this.paused = false;
 		this.pomosSinceStart = 0;
