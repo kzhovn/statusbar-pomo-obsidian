@@ -30,7 +30,7 @@ export default class PomoTimer extends Plugin {
 
 		this.statusBar = this.addStatusBarItem();
 		this.statusBar.addClass("statusbar-pomo")
-		
+
 		this.mode = Mode.NoTimer;
 		this.paused = false;
 		this.pomosSinceStart = 0;
@@ -263,8 +263,6 @@ export default class PomoTimer extends Plugin {
 	async logPomo(): Promise<void> {
 		const file = this.app.vault.getAbstractFileByPath(this.settings.logFile);
 		const logText = moment().format(this.settings.logText);
-		console.log(file)
-		console.log(file instanceof TAbstractFile)
 
 		//this is a sin, please fix it so that it checks for being a folder without doing terrible things
 		if (!file) { //if no file, create
