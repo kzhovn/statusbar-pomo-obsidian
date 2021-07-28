@@ -23,7 +23,7 @@ export default class PomoTimer extends Plugin {
 	pomosSinceStart: number;
 
 	async onload() {
-		console.log('Loading status bar pomo timer...');
+		console.log('Loading status bar pomodoro timer');
 
 		await this.loadSettings();
 		this.addSettingTab(new PomoSettingTab(this.app, this));
@@ -288,7 +288,7 @@ export default class PomoTimer extends Plugin {
 
 
 	onunload() {
-		console.log('unloading plugin');
+		console.log('Unloading status bar pomodoro timer');
 	}
 
 	async loadSettings() {
