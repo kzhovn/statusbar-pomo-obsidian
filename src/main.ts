@@ -1,6 +1,5 @@
-import { Notice, Plugin, moment, TAbstractFile } from 'obsidian';
+import { Notice, Plugin, moment } from 'obsidian';
 import { PomoSettingTab, PomoSettings, DEFAULT_SETTINGS } from './settings';
-import { PomoStatsModal } from './stats'
 import type { Moment } from 'moment';
 
 enum Mode {
@@ -21,6 +20,7 @@ export default class PomoTimer extends Plugin {
 	pausedTime: number;  /*Time left on paused timer, in milliseconds*/
 	paused: boolean;
 	pomosSinceStart: number;
+	activeNote: string;
 
 	async onload() {
 		console.log('Loading status bar pomodoro timer');
@@ -49,7 +49,7 @@ export default class PomoTimer extends Plugin {
 
 		/*Update status bar timer ever half second
 		  Ideally should change so only updating when in timer mode
-		   - regular conditional doesn't remove after quit, need unload*/
+		  - regular conditional doesn't remove after quit, need unload*/
 		this.registerInterval(window.setInterval(() =>
 			this.statusBar.setText(this.setStatusBarText()), 500));
 
@@ -90,7 +90,7 @@ export default class PomoTimer extends Plugin {
 				let leaf = this.app.workspace.activeLeaf;
 				if (leaf) {
 					if (!checking) {
-						if (this.paused) {
+						if (this.paused === true) {
 							this.restartTimer();
 						} else if (this.mode !== Mode.NoTimer) { //if some timer running
 							this.pauseTimer();
@@ -101,27 +101,11 @@ export default class PomoTimer extends Plugin {
 				return false;
 			}
 		});
-
-		this.addCommand({
-			id: 'satusbar-pomo-stats',
-			name: 'Open pomodoro stats',
-			checkCallback: (checking: boolean) => {
-				let leaf = this.app.workspace.activeLeaf;
-				if (leaf) {
-					if (!checking) {
-						new PomoStatsModal(this.app, this).open();
-					}
-					return true;
-				}
-				return false;
-			}
-
-		});
 	}
 
 	quitTimer(): void {
 		this.mode = Mode.NoTimer;
-		this.startTime = moment(0); //would be good to do this automatically on mode set
+		this.startTime = moment(0);
 		this.endTime = moment(0);
 	}
 
@@ -149,7 +133,7 @@ export default class PomoTimer extends Plugin {
 		this.endTime = moment().add(millisecsLeft, 'milliseconds');
 	}
 
-	/*text is *not* set if no timer is running*/
+	/*Set status bar to remaining time or empty string if no timer is running*/
 	setStatusBarText(): string {
 		if (this.mode !== Mode.NoTimer) {
 			if (this.paused === true) {
@@ -171,7 +155,7 @@ export default class PomoTimer extends Plugin {
 
 			return millisecsToString(this.getCountdown());
 		} else {
-			return "";
+			return ""; //fixes(?) TypeError: failed to execute 'appendChild' on 'Node https://github.com/kzhovn/statusbar-pomo-obsidian/issues/4
 		}
 	}
 
@@ -187,20 +171,14 @@ export default class PomoTimer extends Plugin {
 			playSound();
 		}
 
-		switch (this.mode) {
-			case (Mode.Pomo): {
-				if (this.pomosSinceStart % this.settings.longBreakInterval === 0) {
+		if (this.mode === Mode.Pomo) {
+			if (this.pomosSinceStart % this.settings.longBreakInterval === 0) {
 					this.startTimer(Mode.LongBreak);
 				} else {
 					this.startTimer(Mode.ShortBreak);
 				}
-				break;
-			}
-			case (Mode.ShortBreak):
-			case (Mode.LongBreak): {
-				this.startTimer(Mode.Pomo);
-				break;
-			}
+		} else { //short break. long break, or no timer
+			this.startTimer(Mode.Pomo);
 		}
 	}
 
@@ -277,7 +255,7 @@ export default class PomoTimer extends Plugin {
 
 	}
 
-	//Note Refactor plugin
+	//from Note Refactor plugin
 	async appendFile(filePath: string, note: string) {
 		let existingContent = await this.app.vault.adapter.read(filePath);
 		if (existingContent.length > 0) {
@@ -300,7 +278,7 @@ export default class PomoTimer extends Plugin {
 	}
 }
 
-/*Returns mm:ss, where mm is the number of minutes and ss is the number of seconds left on the current timer*/
+/*Returns [HH:]mm:ss left on the current timer*/
 function millisecsToString(millisecs: number): string {
 	var formatedCountDown: string;
 

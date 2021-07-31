@@ -12,6 +12,7 @@ export interface PomoSettings {
 	logToDaily: boolean;
 	logFile: string;
 	logText: string;
+	logActiveNote: boolean;
 }
 
 export const DEFAULT_SETTINGS: PomoSettings = {
@@ -25,6 +26,7 @@ export const DEFAULT_SETTINGS: PomoSettings = {
 	logToDaily: false,
 	logFile: "Pomodoro Log.md",
 	logText: "[🍅] dddd, MMMM DD YYYY, h:mm A",
+	logActiveNote: false,
 }
 
 export class PomoSettingTab extends PluginSettingTab {
@@ -124,6 +126,15 @@ export class PomoSettingTab extends PluginSettingTab {
 						this.plugin.saveSettings();
 					}));
 
+			new Setting(containerEl)
+			.setName('Log active note')
+			.setDesc('In log, add wikilink to the note that was active when you started the pomodoro.')
+			.addToggle(toggle => toggle
+					.setValue(this.plugin.settings.logActiveNote)
+					.onChange(value => {
+						this.plugin.settings.logActiveNote = value;
+						this.plugin.saveSettings();
+					}));
 		}
 
 	}
