@@ -1,4 +1,4 @@
-import { Notice, Plugin, moment, MarkdownView, TFile } from 'obsidian';
+import { Notice, Plugin, moment, TFile } from 'obsidian';
 import { PomoSettingTab, PomoSettings, DEFAULT_SETTINGS } from './settings';
 import type { Moment } from 'moment';
 
@@ -131,8 +131,6 @@ export default class PomoTimer extends Plugin {
 				this.activeNote = activeView;
 			}
 		}
-
-
 
 		this.setStartEndTime(this.getTotalModeMillisecs());
 		this.modeStartingNotification();
