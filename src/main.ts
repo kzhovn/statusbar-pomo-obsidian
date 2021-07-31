@@ -1,4 +1,4 @@
-import { Notice, Plugin, moment } from 'obsidian';
+import { Notice, Plugin, moment, MarkdownView, TFile } from 'obsidian';
 import { PomoSettingTab, PomoSettings, DEFAULT_SETTINGS } from './settings';
 import type { Moment } from 'moment';
 
@@ -20,7 +20,7 @@ export default class PomoTimer extends Plugin {
 	pausedTime: number;  /*Time left on paused timer, in milliseconds*/
 	paused: boolean;
 	pomosSinceStart: number;
-	activeNote: string;
+	activeNote: TFile;
 
 	async onload() {
 		console.log('Loading status bar pomodoro timer');
@@ -124,6 +124,16 @@ export default class PomoTimer extends Plugin {
 
 	startTimer(mode: Mode): void {
 		this.mode = mode;
+
+		if (this.settings.logActiveNote === true) {
+			const activeView = this.app.workspace.getActiveFile();
+			if (activeView) {
+				this.activeNote = activeView;
+			}
+		}
+
+
+
 		this.setStartEndTime(this.getTotalModeMillisecs());
 		this.modeStartingNotification();
 	}
@@ -139,7 +149,7 @@ export default class PomoTimer extends Plugin {
 			if (this.paused === true) {
 				return millisecsToString(this.pausedTime);
 			}
-			/*if reaching the end of the current timer, switch to the next one (e.g. pomo -> break*/
+			/*if reaching the end of the current timer, switch to the next one (e.g. pomo -> break)*/
 			else if (moment().isSameOrAfter(this.endTime)) {
 				if (this.mode === Mode.Pomo) { /*completed another pomo*/
 					this.settings.totalPomosCompleted += 1;
@@ -243,7 +253,11 @@ export default class PomoTimer extends Plugin {
 
 	async logPomo(): Promise<void> {
 		const file = this.app.vault.getAbstractFileByPath(this.settings.logFile);
-		const logText = moment().format(this.settings.logText);
+		var logText = moment().format(this.settings.logText);
+
+		if (this.settings.logActiveNote === true) {
+			logText = logText + " " + this.app.fileManager.generateMarkdownLink(this.activeNote, '');
+		}
 
 		//this is a sin, please fix it so that it checks for being a folder without doing terrible things
 		if (!file) { //if no file, create
