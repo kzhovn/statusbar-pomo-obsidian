@@ -6,13 +6,13 @@ export interface PomoSettings {
 	shortBreak: number;
 	longBreak: number;
 	longBreakInterval: number;
-	totalPomosCompleted: number;
 	notificationSound: boolean;
 	logging: boolean;
 	logToDaily: boolean;
 	logFile: string;
 	logText: string;
 	logActiveNote: boolean;
+	fancyStatusBar: boolean;
 }
 
 export const DEFAULT_SETTINGS: PomoSettings = {
@@ -20,13 +20,13 @@ export const DEFAULT_SETTINGS: PomoSettings = {
 	shortBreak: 5,
 	longBreak: 15,
 	longBreakInterval: 4,
-	totalPomosCompleted: 0,
 	notificationSound: true,
 	logging: false,
 	logToDaily: false,
 	logFile: "Pomodoro Log.md",
 	logText: "[🍅] dddd, MMMM DD YYYY, h:mm A",
 	logActiveNote: false,
+	fancyStatusBar: false,
 }
 
 export class PomoSettingTab extends PluginSettingTab {
@@ -44,7 +44,7 @@ export class PomoSettingTab extends PluginSettingTab {
 
 		new Setting(containerEl)
 			.setName('Pomodoro time (minutes)')
-			.setDesc('Leave blank for default.')
+			.setDesc('Leave blank for default')
 			.addText(text => text
 				.setValue(this.plugin.settings.pomo.toString())
 				.onChange(value => {
@@ -54,7 +54,7 @@ export class PomoSettingTab extends PluginSettingTab {
 
 		new Setting(containerEl)
 			.setName('Short break time (minutes)')
-			.setDesc('Leave blank for default.')
+			.setDesc('Leave blank for default')
 			.addText(text => text
 				.setValue(this.plugin.settings.shortBreak.toString())
 				.onChange(value => {
@@ -64,7 +64,7 @@ export class PomoSettingTab extends PluginSettingTab {
 
 		new Setting(containerEl)
 			.setName('Long break time (minutes)')
-			.setDesc('Leave blank for default.')
+			.setDesc('Leave blank for default')
 			.addText(text => text
 				.setValue(this.plugin.settings.longBreak.toString())
 				.onChange(value => {
@@ -74,7 +74,7 @@ export class PomoSettingTab extends PluginSettingTab {
 
 		new Setting(containerEl)
 			.setName('Long break interval')
-			.setDesc('Number of pomos before a long break. Leave blank for default.')
+			.setDesc('Number of pomos before a long break; leave blank for default')
 			.addText(text => text
 				.setValue(this.plugin.settings.longBreakInterval.toString())
 				.onChange(value => {
@@ -84,13 +84,23 @@ export class PomoSettingTab extends PluginSettingTab {
 
 		new Setting(containerEl)
 			.setName('Notification sound')
-			.setDesc('Play notification sound at the end of each pomo and break.')
+			.setDesc('Play notification sound at the end of each pomo and break')
 			.addToggle(toggle => toggle
 					.setValue(this.plugin.settings.notificationSound)
 					.onChange(value => {
 						this.plugin.settings.notificationSound = value;
 						this.plugin.saveSettings();
 					}));
+
+		new Setting(containerEl)
+		.setName('Fancy status bar')
+		.setDesc('Display a visual progress bar next to the timer')
+		.addToggle(toggle => toggle
+				.setValue(this.plugin.settings.fancyStatusBar)
+				.onChange(async value => {
+					this.plugin.settings.fancyStatusBar = value;
+					this.plugin.saveSettings();
+				}));
 
 		new Setting(containerEl)
 			.setName('Logging')
@@ -108,7 +118,7 @@ export class PomoSettingTab extends PluginSettingTab {
 
 			new Setting(containerEl)
 				.setName('Log file')
-				.setDesc(`If file doesn't already exist, it will be created. Leave blank for current file, ${this.plugin.settings.logFile}.`)
+				.setDesc(`If file doesn't already exist, it will be created; leave blank for current file, ${this.plugin.settings.logFile}.`)
 				.addText(text => text
 					.setValue(this.plugin.settings.logFile.toString())
 					.onChange(value => {
@@ -128,7 +138,7 @@ export class PomoSettingTab extends PluginSettingTab {
 
 			new Setting(containerEl)
 			.setName('Log active note')
-			.setDesc('In log, add wikilink to the note that was active when you started the pomodoro.')
+			.setDesc('In log, append wikilink pointing to the note that was active when you started the pomodoro')
 			.addToggle(toggle => toggle
 					.setValue(this.plugin.settings.logActiveNote)
 					.onChange(value => {
