@@ -11,7 +11,7 @@ All of these actions are available from the command pallete. You can also set a 
 
 ## Settings
 
-You can change the duration of the pomodoro timer, breaks, and interval between long breaks, and toggle the end of timer sound.
+You can change the duration of the pomodoro timer, breaks, and interval between long breaks, and toggle the end of timer sound and white noise.
 
 ### Logging
 

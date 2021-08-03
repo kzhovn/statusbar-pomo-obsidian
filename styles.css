@@ -32,11 +32,6 @@
     background-image: linear-gradient(to right,transparent 50%, #4CAF50 0)
 }
 
-.statusbar-pomo-text {
-    float: left;
-    margin-right: 10px;
-}
-
 .progress-pie.statusbar-pomo {
     background-color: var(--text-muted);
     float: left;
