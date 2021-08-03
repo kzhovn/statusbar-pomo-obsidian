@@ -129,7 +129,9 @@ export default class PomoTimer extends Plugin {
 		
 		if (this.mode === Mode.Pomo) {
 			playSoundWithRepeat();
-        }
+        } else {
+			stopPlayingSound();
+		}
 		this.setStartEndTime(this.pausedTime);
 		this.modeRestartingNotification();
 		this.paused = false;
@@ -140,8 +142,9 @@ export default class PomoTimer extends Plugin {
 		
 		if (this.mode === Mode.Pomo) {
 			playSoundWithRepeat();
-        }
-
+        } else {
+			stopPlayingSound();
+		}
 		if (this.settings.logActiveNote === true) {
 			const activeView = this.app.workspace.getActiveFile();
 			if (activeView) {
