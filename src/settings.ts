@@ -93,16 +93,6 @@ export class PomoSettingTab extends PluginSettingTab {
 					}));
 
 		new Setting(containerEl)
-		.setName('Fancy status bar')
-		.setDesc('Display a visual progress bar next to the timer')
-		.addToggle(toggle => toggle
-				.setValue(this.plugin.settings.fancyStatusBar)
-				.onChange(async value => {
-					this.plugin.settings.fancyStatusBar = value;
-					this.plugin.saveSettings();
-				}));
-
-		new Setting(containerEl)
 			.setName('Logging')
 			.setDesc('Enable a log of completed pomodoros')
 			.addToggle(toggle => toggle

@@ -6,10 +6,6 @@
 * https://github.com/lynchjames/obsidian-day-planner/blob/main/src/status-bar.ts
 */
 
-.statusbar-pomo .status-bar-item-segment:hover {
-    cursor: pointer;
-}
-
 .statusbar-pomo-progress-bar {
     margin-top: 2px;
     background-color: var(--text-muted);
@@ -41,24 +37,6 @@
     margin-right: 10px;
 }
 
-.statusbar-pomo-status-card {
-    position: absolute;
-    top: -140px;
-    width: 300px;
-    background-color: var(--background-secondary-alt);
-    padding: 8px;
-    border-radius: 4px;
-    display: none;
-}
-
-.statusbar-pomo-status-card .arrow-down {
-    border-left: 20px solid transparent;
-    border-right: 20px solid transparent;
-    border-top: 20px solid var(--background-secondary-alt);
-    width: 20px;
-    position: absolute;
-}
-
 .progress-pie.statusbar-pomo {
     background-color: var(--text-muted);
     float: left;
@@ -79,10 +57,6 @@
     font-size: 8px;
     font-weight: 900;
     line-height: 13px;
-}
-
-[data-type="timeline"] .view-content {
-    padding-bottom: 0;
 }
 
 
