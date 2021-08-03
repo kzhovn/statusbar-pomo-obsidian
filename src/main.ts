@@ -2,6 +2,7 @@ import { Notice, Plugin, moment, TFile } from 'obsidian';
 import { PomoSettingTab, PomoSettings, DEFAULT_SETTINGS } from './settings';
 import type { Moment } from 'moment';
 import { notificationUrl } from './audio_urls';
+import { backgroundNoiseUrl } from './audio_urls_background_noise';
 
 enum Mode {
 	Pomo,
@@ -11,6 +12,13 @@ enum Mode {
 }
 
 const MILLISECS_IN_MINUTE = 60 * 1000;
+
+
+
+var myAudioRepeat = new Audio(backgroundNoiseUrl);
+var stopPlaying = false;
+
+
 
 export default class PomoTimer extends Plugin {
 	settings: PomoSettings;
@@ -106,6 +114,7 @@ export default class PomoTimer extends Plugin {
 	}
 
 	async quitTimer(): Promise<void> {
+        stopPlayingSound();
 		this.mode = Mode.NoTimer;
 		this.startTime = moment(0);
 		this.endTime = moment(0);
@@ -115,6 +124,7 @@ export default class PomoTimer extends Plugin {
 	}
 
 	pauseTimer(): void {
+		stopPlayingSound();
 		this.paused = true;
 		this.pausedTime = this.getCountdown();
 		this.startTime = moment(0);
@@ -123,6 +133,12 @@ export default class PomoTimer extends Plugin {
 	}
 
 	restartTimer(): void {
+		
+		if (this.mode === Mode.Pomo) {
+			playSoundWithRepeat();
+        } else {
+			stopPlayingSound();
+		}
 		this.setStartEndTime(this.pausedTime);
 		this.modeRestartingNotification();
 		this.paused = false;
@@ -130,7 +146,12 @@ export default class PomoTimer extends Plugin {
 
 	startTimer(mode: Mode): void {
 		this.mode = mode;
-
+		
+		if (this.mode === Mode.Pomo) {
+			playSoundWithRepeat();
+        } else {
+			stopPlayingSound();
+		}
 		if (this.settings.logActiveNote === true) {
 			const activeView = this.app.workspace.getActiveFile();
 			if (activeView) {
@@ -311,6 +332,31 @@ function playSound() {
 	const audio = new Audio(notificationUrl);
 	audio.play();
 }
+
+function playSoundWithRepeat() {
+    stopPlaying = false;
+    myAudioRepeat.play();
+    if (typeof myAudioRepeat.loop == 'boolean') {
+        myAudioRepeat.loop = true;
+    }
+    else {
+        myAudioRepeat.addEventListener('ended', function() {
+                this.currentTime = 0;
+                if(!stopPlaying) {
+                    this.play();
+                }
+            }, false);
+    }
+    myAudioRepeat.play();
+}
+
+function stopPlayingSound() {
+    myAudioRepeat.pause();
+    myAudioRepeat.currentTime = 0;
+    stopPlaying = true;
+}
+
+
 
 
 
