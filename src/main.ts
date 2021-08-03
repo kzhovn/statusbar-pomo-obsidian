@@ -22,7 +22,7 @@ export default class PomoTimer extends Plugin {
 	paused: boolean;
 	pomosSinceStart: number;
 	activeNote: TFile;
-	myAudioRepeat: HTMLAudioElement;
+	whiteNoisePlayer: HTMLAudioElement;
 
 	async onload() {
 		console.log('Loading status bar pomodoro timer');
@@ -38,7 +38,8 @@ export default class PomoTimer extends Plugin {
 		this.pomosSinceStart = 0;
 
 		if (this.settings.whiteNoise === true) {
-			this.myAudioRepeat = new Audio(backgroundNoiseUrl);
+			this.whiteNoisePlayer = new Audio(backgroundNoiseUrl);
+			this.whiteNoisePlayer.loop = true;
 		}
 
 		/*Adds icon to the left side bar which starts the pomo timer when clicked
@@ -53,7 +54,6 @@ export default class PomoTimer extends Plugin {
 			}
 		});
 
-		
 		/*Update status bar timer ever half second
 		  Ideally should change so only updating when in timer mode
 		  - regular conditional doesn't remove after quit, need unload*/
@@ -110,6 +110,34 @@ export default class PomoTimer extends Plugin {
 		});
 	}
 
+	/*Set status bar to remaining time or empty string if no timer is running*/
+	setStatusBarText(): string {
+		if (this.mode !== Mode.NoTimer) {
+			if (this.paused === true) {
+				return millisecsToString(this.pausedTime);
+			}
+			/*if reaching the end of the current timer, switch to the next one (e.g. pomo -> break)*/
+			else if (moment().isSameOrAfter(this.endTime)) {
+				if (this.mode === Mode.Pomo) { /*completed another pomo*/
+					this.pomosSinceStart += 1;
+
+					if (this.settings.logging === true) {
+						this.logPomo();
+					}
+				}
+				this.switchMode();
+			}
+
+			return millisecsToString(this.getCountdown());
+		} else {
+			return ""; //fixes TypeError: failed to execute 'appendChild' on 'Node https://github.com/kzhovn/statusbar-pomo-obsidian/issues/4
+		}
+	}
+
+
+
+	/**************  Timer  **************/
+
 	async quitTimer(): Promise<void> {
 		this.mode = Mode.NoTimer;
 		this.startTime = moment(0);
@@ -143,7 +171,7 @@ export default class PomoTimer extends Plugin {
 		this.paused = false;
 
 		if (this.settings.whiteNoise === true) {
-			this.playWhiteNoise();
+			this.whiteNoisePlayer.play();
 		}
 	}
 
@@ -161,37 +189,13 @@ export default class PomoTimer extends Plugin {
 		this.modeStartingNotification();
 		
 		if (this.settings.whiteNoise === true) { 
-			this.playWhiteNoise();
+			this.whiteNoisePlayer.play();
 		}
 	}
 
 	setStartEndTime(millisecsLeft: number): void {
 		this.startTime = moment(); //start time to current time
 		this.endTime = moment().add(millisecsLeft, 'milliseconds');
-	}
-
-	/*Set status bar to remaining time or empty string if no timer is running*/
-	setStatusBarText(): string {
-		if (this.mode !== Mode.NoTimer) {
-			if (this.paused === true) {
-				return millisecsToString(this.pausedTime);
-			}
-			/*if reaching the end of the current timer, switch to the next one (e.g. pomo -> break)*/
-			else if (moment().isSameOrAfter(this.endTime)) {
-				if (this.mode === Mode.Pomo) { /*completed another pomo*/
-					this.pomosSinceStart += 1;
-
-					if (this.settings.logging === true) {
-						this.logPomo();
-					}
-				}
-				this.switchMode();
-			}
-
-			return millisecsToString(this.getCountdown());
-		} else {
-			return ""; //fixes TypeError: failed to execute 'appendChild' on 'Node https://github.com/kzhovn/statusbar-pomo-obsidian/issues/4
-		}
 	}
 
 	/*Return milliseconds left until end of timer*/
@@ -220,6 +224,25 @@ export default class PomoTimer extends Plugin {
 			this.whiteNoise();
 		}
 	}
+
+	getTotalModeMillisecs(): number {
+		switch (this.mode) {
+			case Mode.Pomo: {
+				return this.settings.pomo * MILLISECS_IN_MINUTE;
+			}
+			case Mode.ShortBreak: {
+				return this.settings.shortBreak * MILLISECS_IN_MINUTE;
+			}
+			case Mode.LongBreak: {
+				return this.settings.longBreak * MILLISECS_IN_MINUTE;
+			}
+			//handle Mode.NoTimer?
+		}
+	}
+
+
+
+	/**************  Notifications  **************/
 
 	/*Sends notification corresponding to whatever the mode is at the moment it's called*/
 	modeStartingNotification(): void {
@@ -265,20 +288,9 @@ export default class PomoTimer extends Plugin {
 		}
 	}
 
-	getTotalModeMillisecs(): number {
-		switch (this.mode) {
-			case Mode.Pomo: {
-				return this.settings.pomo * MILLISECS_IN_MINUTE;
-			}
-			case Mode.ShortBreak: {
-				return this.settings.shortBreak * MILLISECS_IN_MINUTE;
-			}
-			case Mode.LongBreak: {
-				return this.settings.longBreak * MILLISECS_IN_MINUTE;
-			}
-			//handle Mode.NoTimer?
-		}
-	}
+
+
+	/**************  Logging  **************/
 
 	async logPomo(): Promise<void> {
 		const file = this.app.vault.getAbstractFileByPath(this.settings.logFile);
@@ -305,35 +317,27 @@ export default class PomoTimer extends Plugin {
 		}
 		await this.app.vault.adapter.write(filePath, existingContent + note);
 	}
-
-	//grassbl8d https://github.com/kzhovn/statusbar-pomo-obsidian/pull/8
-	playWhiteNoise() {
-		this.myAudioRepeat.play();
-
-		if (typeof this.myAudioRepeat.loop == 'boolean') {
-			this.myAudioRepeat.loop = true;
-		} else {
-			this.myAudioRepeat.addEventListener('ended', function() {
-					this.currentTime = 0;
-					this.play();
-				}, false);
-		}
-		this.myAudioRepeat.play();
-	}
 	
+
+
+	/**************  Audio  **************/
+
 	stopWhiteNoise() {
-		this.myAudioRepeat.pause();
-		this.myAudioRepeat.currentTime = 0;
+		this.whiteNoisePlayer.pause();
+		this.whiteNoisePlayer.currentTime = 0;
 	}
 
 	whiteNoise() {
 		if (this.mode === Mode.Pomo && this.paused === false) {
-			this.playWhiteNoise();
+			this.whiteNoisePlayer.play();
 		} else {
 			this.stopWhiteNoise();
 		}
 	}
 
+
+
+	/**************  Meta  **************/
 
 	onunload() {
 		this.quitTimer();

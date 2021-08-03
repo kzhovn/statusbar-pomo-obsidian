@@ -45,6 +45,9 @@ export class PomoSettingTab extends PluginSettingTab {
 		containerEl.empty();
 		containerEl.createEl('h2', { text: 'Status Bar Pomodoro Timer - Settings' });
 
+	
+		/**************  Timer settings **************/
+
 		new Setting(containerEl)
 			.setName('Pomodoro time (minutes)')
 			.setDesc('Leave blank for default')
@@ -85,9 +88,12 @@ export class PomoSettingTab extends PluginSettingTab {
 					this.plugin.saveSettings();
 				}));
 
+
+		/**************  Sound settings **************/
+			
 		new Setting(containerEl)
 			.setName('Notification sound')
-			.setDesc('Play notification sound at the end of each pomo and break')
+			.setDesc('Play notification sound at the end of each pomodoro and break')
 			.addToggle(toggle => toggle
 					.setValue(this.plugin.settings.notificationSound)
 					.onChange(value => {
@@ -105,9 +111,15 @@ export class PomoSettingTab extends PluginSettingTab {
 						this.plugin.saveSettings();
 
 						if (this.plugin.settings.whiteNoise === true) {
-							this.plugin.myAudioRepeat = new Audio(backgroundNoiseUrl);
+							this.plugin.whiteNoisePlayer = new Audio(backgroundNoiseUrl);
+							this.plugin.whiteNoise()
+						} else { //if false, turn it off immediately
+							this.plugin.stopWhiteNoise();
 						}
 					}));
+
+
+		/**************  Logging settings **************/
 
 		new Setting(containerEl)
 			.setName('Logging')
@@ -153,8 +165,8 @@ export class PomoSettingTab extends PluginSettingTab {
 						this.plugin.saveSettings();
 					}));
 		}
-
 	}
+
 
 	//sets the setting for the given timer to value if valid, default if empty, otherwise sends user error notice
 	setTimerValue(value, timer_type: string): number {
