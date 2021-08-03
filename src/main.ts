@@ -1,8 +1,7 @@
 import { Notice, Plugin, moment, TFile } from 'obsidian';
 import { PomoSettingTab, PomoSettings, DEFAULT_SETTINGS } from './settings';
 import type { Moment } from 'moment';
-import { notificationUrl } from './audio_urls';
-import { backgroundNoiseUrl } from './audio_urls_background_noise';
+import { notificationUrl, backgroundNoiseUrl } from './audio_urls';
 
 enum Mode {
 	Pomo,
@@ -12,13 +11,6 @@ enum Mode {
 }
 
 const MILLISECS_IN_MINUTE = 60 * 1000;
-
-
-
-var myAudioRepeat = new Audio(backgroundNoiseUrl);
-var stopPlaying = false;
-
-
 
 export default class PomoTimer extends Plugin {
 	settings: PomoSettings;
@@ -30,6 +22,7 @@ export default class PomoTimer extends Plugin {
 	paused: boolean;
 	pomosSinceStart: number;
 	activeNote: TFile;
+	myAudioRepeat: HTMLAudioElement;
 
 	async onload() {
 		console.log('Loading status bar pomodoro timer');
@@ -43,6 +36,10 @@ export default class PomoTimer extends Plugin {
 		this.mode = Mode.NoTimer;
 		this.paused = false;
 		this.pomosSinceStart = 0;
+
+		if (this.settings.whiteNoise === true) {
+			this.myAudioRepeat = new Audio(backgroundNoiseUrl);
+		}
 
 		/*Adds icon to the left side bar which starts the pomo timer when clicked
 		  if no timer is currently running, and otherwise quits current timer*/
@@ -114,44 +111,45 @@ export default class PomoTimer extends Plugin {
 	}
 
 	async quitTimer(): Promise<void> {
-        stopPlayingSound();
 		this.mode = Mode.NoTimer;
 		this.startTime = moment(0);
 		this.endTime = moment(0);
 		this.paused = false;
 		this.pomosSinceStart = 0;
+
+		if (this.settings.whiteNoise === true) {
+			this.stopWhiteNoise();
+		}
+
 		await this.loadSettings();
 	}
 
 	pauseTimer(): void {
-		stopPlayingSound();
 		this.paused = true;
 		this.pausedTime = this.getCountdown();
 		this.startTime = moment(0);
 		this.endTime = moment(0);
+
+		if (this.settings.whiteNoise === true) {
+			this.stopWhiteNoise();
+		}	
+		
 		new Notice('Timer paused.');
 	}
 
 	restartTimer(): void {
-		
-		if (this.mode === Mode.Pomo) {
-			playSoundWithRepeat();
-        } else {
-			stopPlayingSound();
-		}
 		this.setStartEndTime(this.pausedTime);
 		this.modeRestartingNotification();
 		this.paused = false;
+
+		if (this.settings.whiteNoise === true) {
+			this.playWhiteNoise();
+		}
 	}
 
 	startTimer(mode: Mode): void {
 		this.mode = mode;
-		
-		if (this.mode === Mode.Pomo) {
-			playSoundWithRepeat();
-        } else {
-			stopPlayingSound();
-		}
+
 		if (this.settings.logActiveNote === true) {
 			const activeView = this.app.workspace.getActiveFile();
 			if (activeView) {
@@ -161,6 +159,10 @@ export default class PomoTimer extends Plugin {
 
 		this.setStartEndTime(this.getTotalModeMillisecs());
 		this.modeStartingNotification();
+		
+		if (this.settings.whiteNoise === true) { 
+			this.playWhiteNoise();
+		}
 	}
 
 	setStartEndTime(millisecsLeft: number): void {
@@ -201,7 +203,7 @@ export default class PomoTimer extends Plugin {
 	/*switch from pomos to long or short breaks as appropriate*/
 	switchMode(): void {
 		if (this.settings.notificationSound === true) { //play sound end of timer
-			playSound();
+			playNotification();
 		}
 
 		if (this.mode === Mode.Pomo) {
@@ -212,6 +214,10 @@ export default class PomoTimer extends Plugin {
 				}
 		} else { //short break. long break, or no timer
 			this.startTimer(Mode.Pomo);
+		}
+
+		if (this.settings.whiteNoise === true) {
+			this.whiteNoise();
 		}
 	}
 
@@ -276,7 +282,7 @@ export default class PomoTimer extends Plugin {
 
 	async logPomo(): Promise<void> {
 		const file = this.app.vault.getAbstractFileByPath(this.settings.logFile);
-		let logText = moment().format(this.settings.logText);
+		var logText = moment().format(this.settings.logText);
 
 		if (this.settings.logActiveNote === true) {
 			logText = logText + " " + this.app.fileManager.generateMarkdownLink(this.activeNote, '');
@@ -289,7 +295,6 @@ export default class PomoTimer extends Plugin {
 		}
 
 		await this.appendFile(this.settings.logFile, logText);
-
 	}
 
 	//from Note Refactor plugin
@@ -300,6 +305,35 @@ export default class PomoTimer extends Plugin {
 		}
 		await this.app.vault.adapter.write(filePath, existingContent + note);
 	}
+
+	//grassbl8d https://github.com/kzhovn/statusbar-pomo-obsidian/pull/8
+	playWhiteNoise() {
+		this.myAudioRepeat.play();
+
+		if (typeof this.myAudioRepeat.loop == 'boolean') {
+			this.myAudioRepeat.loop = true;
+		} else {
+			this.myAudioRepeat.addEventListener('ended', function() {
+					this.currentTime = 0;
+					this.play();
+				}, false);
+		}
+		this.myAudioRepeat.play();
+	}
+	
+	stopWhiteNoise() {
+		this.myAudioRepeat.pause();
+		this.myAudioRepeat.currentTime = 0;
+	}
+
+	whiteNoise() {
+		if (this.mode === Mode.Pomo && this.paused === false) {
+			this.playWhiteNoise();
+		} else {
+			this.stopWhiteNoise();
+		}
+	}
+
 
 	onunload() {
 		this.quitTimer();
@@ -328,32 +362,9 @@ function millisecsToString(millisecs: number): string {
 	return formatedCountDown.toString();
 }
 
-function playSound() {
+function playNotification() {
 	const audio = new Audio(notificationUrl);
 	audio.play();
-}
-
-function playSoundWithRepeat() {
-    stopPlaying = false;
-    myAudioRepeat.play();
-    if (typeof myAudioRepeat.loop == 'boolean') {
-        myAudioRepeat.loop = true;
-    }
-    else {
-        myAudioRepeat.addEventListener('ended', function() {
-                this.currentTime = 0;
-                if(!stopPlaying) {
-                    this.play();
-                }
-            }, false);
-    }
-    myAudioRepeat.play();
-}
-
-function stopPlayingSound() {
-    myAudioRepeat.pause();
-    myAudioRepeat.currentTime = 0;
-    stopPlaying = true;
 }
 
 

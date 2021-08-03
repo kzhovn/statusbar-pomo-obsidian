@@ -1,4 +1,5 @@
 import { App, Notice, PluginSettingTab, Setting } from 'obsidian';
+import { backgroundNoiseUrl } from './audio_urls';
 import PomoTimer from './main';
 
 export interface PomoSettings {
@@ -13,6 +14,7 @@ export interface PomoSettings {
 	logText: string;
 	logActiveNote: boolean;
 	fancyStatusBar: boolean;
+	whiteNoise: boolean;
 }
 
 export const DEFAULT_SETTINGS: PomoSettings = {
@@ -27,6 +29,7 @@ export const DEFAULT_SETTINGS: PomoSettings = {
 	logText: "[🍅] dddd, MMMM DD YYYY, h:mm A",
 	logActiveNote: false,
 	fancyStatusBar: false,
+	whiteNoise: false,
 }
 
 export class PomoSettingTab extends PluginSettingTab {
@@ -90,6 +93,20 @@ export class PomoSettingTab extends PluginSettingTab {
 					.onChange(value => {
 						this.plugin.settings.notificationSound = value;
 						this.plugin.saveSettings();
+					}));
+
+		new Setting(containerEl)
+			.setName('White noise')
+			.setDesc('Play white noise while timer is active')
+			.addToggle(toggle => toggle
+					.setValue(this.plugin.settings.whiteNoise)
+					.onChange(value => {
+						this.plugin.settings.whiteNoise = value;
+						this.plugin.saveSettings();
+
+						if (this.plugin.settings.whiteNoise === true) {
+							this.plugin.myAudioRepeat = new Audio(backgroundNoiseUrl);
+						}
 					}));
 
 		new Setting(containerEl)
