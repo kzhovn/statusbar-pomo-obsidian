@@ -126,15 +126,21 @@ export default class PomoTimer extends Plugin {
 	}
 
 	restartTimer(): void {
-		playSoundWithRepeat();
+		
+		if (this.mode === Mode.Pomo) {
+			playSoundWithRepeat();
+        }
 		this.setStartEndTime(this.pausedTime);
 		this.modeRestartingNotification();
 		this.paused = false;
 	}
 
 	startTimer(mode: Mode): void {
-		playSoundWithRepeat();
 		this.mode = mode;
+		
+		if (this.mode === Mode.Pomo) {
+			playSoundWithRepeat();
+        }
 
 		if (this.settings.logActiveNote === true) {
 			const activeView = this.app.workspace.getActiveFile();
