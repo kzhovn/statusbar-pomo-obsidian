@@ -1,4 +1,5 @@
-import { App, Notice, PluginSettingTab, Setting } from 'obsidian';
+import { App, Notice, PluginSettingTab, Setting, TFile, moment } from 'obsidian';
+import { appHasDailyNotesPluginLoaded, createDailyNote, getAllDailyNotes, getDailyNote } from 'obsidian-daily-notes-interface';
 import { whiteNoiseUrl } from './audio_urls';
 import PomoTimer from './main';
 
@@ -9,9 +10,10 @@ export interface PomoSettings {
 	longBreakInterval: number;
 	notificationSound: boolean;
 	logging: boolean;
-	logToDaily: boolean;
 	logFile: string;
+	logFileStore: string;
 	logText: string;
+	logToDaily: boolean;
 	logActiveNote: boolean;
 	fancyStatusBar: boolean;
 	whiteNoise: boolean;
@@ -24,8 +26,9 @@ export const DEFAULT_SETTINGS: PomoSettings = {
 	longBreakInterval: 4,
 	notificationSound: true,
 	logging: false,
-	logToDaily: false,
 	logFile: "Pomodoro Log.md",
+	logFileStore: "",
+	logToDaily: false,
 	logText: "[🍅] dddd, MMMM DD YYYY, h:mm A",
 	logActiveNote: false,
 	fancyStatusBar: false,
@@ -146,6 +149,25 @@ export class PomoSettingTab extends PluginSettingTab {
 					}));
 
 			new Setting(containerEl)
+				.setName('Log to daily note')
+				.setDesc(`Logs to the end of today's daily note`)
+				.addToggle(toggle => toggle
+					.onChange(async value => {
+						if (value === true && appHasDailyNotesPluginLoaded() === true) {
+							this.plugin.settings.logFileStore = this.plugin.settings.logFile; //don't erase name of file we stored in before
+							this.plugin.settings.logFile = (await getDailyNoteFile()).path;
+						} else if (value === false) {
+							this.plugin.settings.logFile = this.plugin.settings.logFileStore;
+						} else {
+							new Notice("Please enable daily notes plugin");
+						}
+
+						this.plugin.settings.logToDaily = value;
+						this.plugin.saveSettings();
+					}));
+	
+
+			new Setting(containerEl)
 				.setName('Timestamp Format')
 				.setDesc('Specify format for the logtext using moment syntax')
 				.addMomentFormat(text => text
@@ -205,4 +227,14 @@ export class PomoSettingTab extends PluginSettingTab {
 			return timer_settings;
 		}
 	}
+}
+
+async function getDailyNoteFile(): Promise<TFile> {
+	const file = await getDailyNote(moment(), getAllDailyNotes());
+
+	if (!file) {
+		return await createDailyNote(moment());
+	}
+
+	return file;
 }

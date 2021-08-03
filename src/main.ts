@@ -2,6 +2,7 @@ import { Notice, Plugin, moment, TFile } from 'obsidian';
 import { PomoSettingTab, PomoSettings, DEFAULT_SETTINGS } from './settings';
 import type { Moment } from 'moment';
 import { notificationUrl, whiteNoiseUrl } from './audio_urls';
+import { createDailyNote, getAllDailyNotes, getDailyNote } from 'obsidian-daily-notes-interface';
 
 enum Mode {
 	Pomo,
@@ -318,6 +319,7 @@ export default class PomoTimer extends Plugin {
 		await this.app.vault.adapter.write(filePath, existingContent + note);
 	}
 	
+
 
 
 	/**************  Audio  **************/
