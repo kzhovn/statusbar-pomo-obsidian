@@ -1,5 +1,5 @@
 import { App, Notice, PluginSettingTab, Setting } from 'obsidian';
-import { backgroundNoiseUrl } from './audio_urls';
+import { whiteNoiseUrl } from './audio_urls';
 import PomoTimer from './main';
 
 export interface PomoSettings {
@@ -111,7 +111,7 @@ export class PomoSettingTab extends PluginSettingTab {
 						this.plugin.saveSettings();
 
 						if (this.plugin.settings.whiteNoise === true) {
-							this.plugin.whiteNoisePlayer = new Audio(backgroundNoiseUrl);
+							this.plugin.whiteNoisePlayer = new Audio(whiteNoiseUrl);
 							this.plugin.whiteNoise()
 						} else { //if false, turn it off immediately
 							this.plugin.stopWhiteNoise();

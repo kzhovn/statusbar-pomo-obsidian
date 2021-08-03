@@ -1,7 +1,7 @@
 import { Notice, Plugin, moment, TFile } from 'obsidian';
 import { PomoSettingTab, PomoSettings, DEFAULT_SETTINGS } from './settings';
 import type { Moment } from 'moment';
-import { notificationUrl, backgroundNoiseUrl } from './audio_urls';
+import { notificationUrl, whiteNoiseUrl } from './audio_urls';
 
 enum Mode {
 	Pomo,
@@ -38,7 +38,7 @@ export default class PomoTimer extends Plugin {
 		this.pomosSinceStart = 0;
 
 		if (this.settings.whiteNoise === true) {
-			this.whiteNoisePlayer = new Audio(backgroundNoiseUrl);
+			this.whiteNoisePlayer = new Audio(whiteNoiseUrl);
 			this.whiteNoisePlayer.loop = true;
 		}
 
