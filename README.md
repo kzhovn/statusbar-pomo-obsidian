@@ -17,8 +17,9 @@ You can change the duration of the pomodoro timer, breaks, and interval between 
 
 If you enable logging, the plugin will write to the file you specify as your log file at the end of each pomodoro. If no such file exists, it will be created at the end of your first pomo. By default, the log message is "🍅 dddd, MMMM DD YYYY, h:mm A" (e.g. "🍅 Friday, July 16 2021, 6:18 PM"), but you can specfiy your own message using [moment disply format](https://momentjs.com/docs/#/displaying/format/).
 
-Enable "Log active note" to include a link to the active note at the time the pomodoro timer started at the end of the log message.
+"Log to daily note" will append the log to the daily note. Please note that this currently *only* works by appending to the end of the file.
+
+"Log active note" will include a link to the active note at the time the pomodoro timer started in the log message.
 
 ## Compatability
-Only tested on Linux, but should work fine on Windows and Mac as well.
-
+Tested on Linux from Obsidian 0.9.12, but should work on other OSes and older Obsidian versions.
