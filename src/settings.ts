@@ -115,6 +115,7 @@ export class PomoSettingTab extends PluginSettingTab {
 
 						if (this.plugin.settings.whiteNoise === true) {
 							this.plugin.whiteNoisePlayer = new Audio(whiteNoiseUrl);
+							this.plugin.whiteNoisePlayer.loop = true;
 							this.plugin.whiteNoise()
 						} else { //if false, turn it off immediately
 							this.plugin.stopWhiteNoise();
