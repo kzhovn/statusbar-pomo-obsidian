@@ -1,7 +1,8 @@
-import { Notice, Plugin, moment, TFile } from 'obsidian';
+import { Notice, Plugin, moment, TFile, TAbstractFile } from 'obsidian';
 import { PomoSettingTab, PomoSettings, DEFAULT_SETTINGS } from './settings';
 import type { Moment } from 'moment';
 import { notificationUrl, whiteNoiseUrl } from './audio_urls';
+import { getDailyNote, createDailyNote, getAllDailyNotes } from 'obsidian-daily-notes-interface';
 
 enum Mode {
 	Pomo,
@@ -293,7 +294,13 @@ export default class PomoTimer extends Plugin {
 	/**************  Logging  **************/
 
 	async logPomo(): Promise<void> {
-		const file = this.app.vault.getAbstractFileByPath(this.settings.logFile);
+		var file: TAbstractFile;
+		if (this.settings.logToDaily === true) {
+			file = await getDailyNoteFile();
+		} else {
+			file = this.app.vault.getAbstractFileByPath(this.settings.logFile);
+		}
+
 		var logText = moment().format(this.settings.logText);
 
 		if (this.settings.logActiveNote === true) {
@@ -370,6 +377,16 @@ function millisecsToString(millisecs: number): string {
 function playNotification() {
 	const audio = new Audio(notificationUrl);
 	audio.play();
+}
+
+async function getDailyNoteFile(): Promise<TFile> {
+	const file = await getDailyNote(moment(), getAllDailyNotes());
+
+	if (!file) {
+		return await createDailyNote(moment());
+	}
+
+	return file;
 }
 
 

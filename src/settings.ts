@@ -1,5 +1,5 @@
 import { App, Notice, PluginSettingTab, Setting, TFile, moment } from 'obsidian';
-import { appHasDailyNotesPluginLoaded, createDailyNote, getAllDailyNotes, getDailyNote } from 'obsidian-daily-notes-interface';
+import { appHasDailyNotesPluginLoaded } from 'obsidian-daily-notes-interface';
 import { whiteNoiseUrl } from './audio_urls';
 import PomoTimer from './main';
 
@@ -11,7 +11,6 @@ export interface PomoSettings {
 	notificationSound: boolean;
 	logging: boolean;
 	logFile: string;
-	logFileStore: string;
 	logText: string;
 	logToDaily: boolean;
 	logActiveNote: boolean;
@@ -27,7 +26,6 @@ export const DEFAULT_SETTINGS: PomoSettings = {
 	notificationSound: true,
 	logging: false,
 	logFile: "Pomodoro Log.md",
-	logFileStore: "",
 	logToDaily: false,
 	logText: "[🍅] dddd, MMMM DD YYYY, h:mm A",
 	logActiveNote: false,
@@ -153,18 +151,16 @@ export class PomoSettingTab extends PluginSettingTab {
 				.setName('Log to daily note')
 				.setDesc(`Logs to the end of today's daily note`)
 				.addToggle(toggle => toggle
-					.onChange(async value => {
-						if (value === true && appHasDailyNotesPluginLoaded() === true) {
-							this.plugin.settings.logFileStore = this.plugin.settings.logFile; //don't erase name of file we stored in before
-							this.plugin.settings.logFile = (await getDailyNoteFile()).path;
-						} else if (value === false) {
-							this.plugin.settings.logFile = this.plugin.settings.logFileStore;
-						} else {
+					.setValue(this.plugin.settings.logToDaily)
+					.onChange(value => {
+						if (appHasDailyNotesPluginLoaded() === true) {
+							this.plugin.settings.logToDaily = value;
+						} else if (value === true) {
+							this.plugin.settings.logToDaily = false;
 							new Notice("Please enable daily notes plugin");
 						}
-
-						this.plugin.settings.logToDaily = value;
 						this.plugin.saveSettings();
+
 					}));
 	
 
@@ -228,14 +224,4 @@ export class PomoSettingTab extends PluginSettingTab {
 			return timer_settings;
 		}
 	}
-}
-
-async function getDailyNoteFile(): Promise<TFile> {
-	const file = await getDailyNote(moment(), getAllDailyNotes());
-
-	if (!file) {
-		return await createDailyNote(moment());
-	}
-
-	return file;
 }
