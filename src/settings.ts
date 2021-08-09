@@ -93,7 +93,7 @@ export class PomoSettingTab extends PluginSettingTab {
 
 		new Setting(containerEl)
 			.setName('Autostart timer')
-			.setDesc('Start each pomodoro and break automatically. When off, click the ribbon icon in the left to start each new timer')
+			.setDesc('Start each pomodoro and break automatically. When off, click the ribbon icon in the left to start the next timer')
 			.addToggle(toggle => toggle
 					.setValue(this.plugin.settings.autostartTimer)
 					.onChange(value => {

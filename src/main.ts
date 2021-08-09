@@ -112,6 +112,7 @@ export default class PomoTimer extends Plugin {
 	}
 
 	/*Set status bar to remaining time or empty string if no timer is running*/
+	//handling switching logic here, should spin out
 	setStatusBarText(): string {
 		if (this.mode !== Mode.NoTimer) {
 			if (this.paused === true) {
@@ -172,7 +173,7 @@ export default class PomoTimer extends Plugin {
 		this.paused = false;
 
 		if (this.settings.whiteNoise === true) {
-			this.whiteNoisePlayer.play();
+			this.whiteNoise();
 		}
 	}
 
@@ -190,7 +191,7 @@ export default class PomoTimer extends Plugin {
 		this.modeStartingNotification();
 		
 		if (this.settings.whiteNoise === true) { 
-			this.whiteNoisePlayer.play();
+			this.whiteNoise()
 		}
 	}
 
@@ -211,6 +212,10 @@ export default class PomoTimer extends Plugin {
 			playNotification();
 		}
 
+		// if (this.settings.autostartTimer === false) {
+		// 	this.paused = true;
+		// }
+
 		if (this.mode === Mode.Pomo) {
 			if (this.pomosSinceStart % this.settings.longBreakInterval === 0) {
 					this.startTimer(Mode.LongBreak);
@@ -219,10 +224,6 @@ export default class PomoTimer extends Plugin {
 				}
 		} else { //short break. long break, or no timer
 			this.startTimer(Mode.Pomo);
-		}
-
-		if (this.settings.whiteNoise === true) {
-			this.whiteNoise();
 		}
 	}
 
