@@ -8,6 +8,7 @@ export interface PomoSettings {
 	shortBreak: number;
 	longBreak: number;
 	longBreakInterval: number;
+	autostartTimer: boolean;
 	notificationSound: boolean;
 	logging: boolean;
 	logFile: string;
@@ -23,6 +24,7 @@ export const DEFAULT_SETTINGS: PomoSettings = {
 	shortBreak: 5,
 	longBreak: 15,
 	longBreakInterval: 4,
+	autostartTimer: true,
 	notificationSound: true,
 	logging: false,
 	logFile: "Pomodoro Log.md",
@@ -89,6 +91,15 @@ export class PomoSettingTab extends PluginSettingTab {
 					this.plugin.saveSettings();
 				}));
 
+		new Setting(containerEl)
+			.setName('Autostart timer')
+			.setDesc('Start each pomodoro and break automatically. When off, click the ribbon icon in the left to start each new timer')
+			.addToggle(toggle => toggle
+					.setValue(this.plugin.settings.autostartTimer)
+					.onChange(value => {
+						this.plugin.settings.autostartTimer = value;
+						this.plugin.saveSettings();
+					}));
 
 		/**************  Sound settings **************/
 			
