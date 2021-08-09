@@ -1,4 +1,4 @@
-import { App, Notice, PluginSettingTab, Setting, TFile, moment } from 'obsidian';
+import { App, Notice, PluginSettingTab, Setting } from 'obsidian';
 import { appHasDailyNotesPluginLoaded } from 'obsidian-daily-notes-interface';
 import { whiteNoiseUrl } from './audio_urls';
 import PomoTimer from './main';
