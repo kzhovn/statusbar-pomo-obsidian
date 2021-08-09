@@ -58,8 +58,8 @@ export default class PomoTimer extends Plugin {
 		/*Update status bar timer ever half second
 		  Ideally should change so only updating when in timer mode
 		  - regular conditional doesn't remove after quit, need unload*/
-		this.registerInterval(window.setInterval(() =>
-			this.statusBar.setText(this.setStatusBarText()), 500));
+		this.registerInterval(window.setInterval(async () =>
+			this.statusBar.setText(await this.setStatusBarText()), 500));
 
 		this.addCommand({
 			id: 'start-satusbar-pomo',
@@ -113,7 +113,7 @@ export default class PomoTimer extends Plugin {
 
 	/*Set status bar to remaining time or empty string if no timer is running*/
 	//handling switching logic here, should spin out
-	setStatusBarText(): string {
+	async setStatusBarText(): Promise<string> {
 		if (this.mode !== Mode.NoTimer) {
 			if (this.paused === true) {
 				return millisecsToString(this.pausedTime);
@@ -127,7 +127,7 @@ export default class PomoTimer extends Plugin {
 						this.logPomo();
 					}
 				}
-				this.switchMode();
+				await this.switchMode();
 			}
 
 			return millisecsToString(this.getCountdown());
@@ -154,22 +154,18 @@ export default class PomoTimer extends Plugin {
 		await this.loadSettings();
 	}
 
-	pauseTimer(): void {
+	async pauseTimer(): Promise<void> {
 		this.paused = true;
 		this.pausedTime = this.getCountdown();
-		this.startTime = moment(0);
-		this.endTime = moment(0);
 
 		if (this.settings.whiteNoise === true) {
 			this.stopWhiteNoise();
 		}	
-		
-		new Notice('Timer paused.');
 	}
 
-	restartTimer(): void {
+	async restartTimer(): Promise<void> {
 		this.setStartEndTime(this.pausedTime);
-		this.modeRestartingNotification();
+		await this.modeRestartingNotification();
 		this.paused = false;
 
 		if (this.settings.whiteNoise === true) {
@@ -177,7 +173,7 @@ export default class PomoTimer extends Plugin {
 		}
 	}
 
-	startTimer(mode: Mode): void {
+	async startTimer(mode: Mode): Promise<void> {
 		this.mode = mode;
 
 		if (this.settings.logActiveNote === true) {
@@ -188,7 +184,7 @@ export default class PomoTimer extends Plugin {
 		}
 
 		this.setStartEndTime(this.getTotalModeMillisecs());
-		this.modeStartingNotification();
+		await this.modeStartingNotification();
 		
 		if (this.settings.whiteNoise === true) { 
 			this.whiteNoise()
@@ -207,23 +203,23 @@ export default class PomoTimer extends Plugin {
 	}
 
 	/*switch from pomos to long or short breaks as appropriate*/
-	switchMode(): void {
+	async switchMode(): Promise<void> {
 		if (this.settings.notificationSound === true) { //play sound end of timer
-			playNotification();
+			await playNotification();
 		}
-
-		// if (this.settings.autostartTimer === false) {
-		// 	this.paused = true;
-		// }
 
 		if (this.mode === Mode.Pomo) {
 			if (this.pomosSinceStart % this.settings.longBreakInterval === 0) {
-					this.startTimer(Mode.LongBreak);
+					await this.startTimer(Mode.LongBreak);
 				} else {
-					this.startTimer(Mode.ShortBreak);
+					await this.startTimer(Mode.ShortBreak);
 				}
 		} else { //short break. long break, or no timer
-			this.startTimer(Mode.Pomo);
+			await this.startTimer(Mode.Pomo);
+		}
+
+		if (this.settings.autostartTimer === false) { //if autostart disabled, pause and allow user to start manually
+			await this.pauseTimer();
 		}
 	}
 
@@ -238,7 +234,9 @@ export default class PomoTimer extends Plugin {
 			case Mode.LongBreak: {
 				return this.settings.longBreak * MILLISECS_IN_MINUTE;
 			}
-			//handle Mode.NoTimer?
+			case Mode.NoTimer: {
+				throw new Error("Mode NoTimer does not have an associated time value")
+			}
 		}
 	}
 
@@ -247,7 +245,7 @@ export default class PomoTimer extends Plugin {
 	/**************  Notifications  **************/
 
 	/*Sends notification corresponding to whatever the mode is at the moment it's called*/
-	modeStartingNotification(): void {
+	async modeStartingNotification(): Promise<void> {
 		let time = this.getTotalModeMillisecs();
 		let unit: string;
 
@@ -276,7 +274,7 @@ export default class PomoTimer extends Plugin {
 		}
 	}
 
-	modeRestartingNotification(): void {
+	async modeRestartingNotification(): Promise<void> {
 		switch (this.mode) {
 			case (Mode.Pomo): {
 				new Notice(`Restarting pomodoro.`);
@@ -296,6 +294,7 @@ export default class PomoTimer extends Plugin {
 
 	async logPomo(): Promise<void> {
 		var file: TAbstractFile;
+
 		if (this.settings.logToDaily === true) {
 			file = await getDailyNoteFile();
 		} else {
@@ -375,13 +374,13 @@ function millisecsToString(millisecs: number): string {
 	return formatedCountDown.toString();
 }
 
-function playNotification() {
+async function playNotification() {
 	const audio = new Audio(notificationUrl);
 	audio.play();
 }
 
 async function getDailyNoteFile(): Promise<TFile> {
-	const file = await getDailyNote(moment(), getAllDailyNotes());
+	const file = getDailyNote(moment(), getAllDailyNotes());
 
 	if (!file) {
 		return await createDailyNote(moment());
