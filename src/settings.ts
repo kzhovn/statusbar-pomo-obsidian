@@ -9,6 +9,7 @@ export interface PomoSettings {
 	longBreak: number;
 	longBreakInterval: number;
 	autostartTimer: boolean;
+	numAutoCycles: number;
 	notificationSound: boolean;
 	logging: boolean;
 	logFile: string;
@@ -25,6 +26,7 @@ export const DEFAULT_SETTINGS: PomoSettings = {
 	longBreak: 15,
 	longBreakInterval: 4,
 	autostartTimer: true,
+	numAutoCycles: 0,
 	notificationSound: true,
 	logging: false,
 	logFile: "Pomodoro Log.md",
@@ -57,7 +59,7 @@ export class PomoSettingTab extends PluginSettingTab {
 			.addText(text => text
 				.setValue(this.plugin.settings.pomo.toString())
 				.onChange(value => {
-					this.plugin.settings.pomo = this.setTimerValue(value, 'pomo');
+					this.plugin.settings.pomo = setNumericValue(value, DEFAULT_SETTINGS.pomo, this.plugin.settings.pomo);;
 					this.plugin.saveSettings();
 				}));
 
@@ -67,7 +69,7 @@ export class PomoSettingTab extends PluginSettingTab {
 			.addText(text => text
 				.setValue(this.plugin.settings.shortBreak.toString())
 				.onChange(value => {
-					this.plugin.settings.shortBreak = this.setTimerValue(value, 'shortBreak');
+					this.plugin.settings.shortBreak = setNumericValue(value, DEFAULT_SETTINGS.shortBreak, this.plugin.settings.shortBreak);;
 					this.plugin.saveSettings();
 				}));
 
@@ -77,7 +79,7 @@ export class PomoSettingTab extends PluginSettingTab {
 			.addText(text => text
 				.setValue(this.plugin.settings.longBreak.toString())
 				.onChange(value => {
-					this.plugin.settings.longBreak = this.setTimerValue(value, 'longBreak');
+					this.plugin.settings.longBreak = setNumericValue(value, DEFAULT_SETTINGS.longBreak, this.plugin.settings.longBreak);;
 					this.plugin.saveSettings();
 				}));
 
@@ -87,19 +89,33 @@ export class PomoSettingTab extends PluginSettingTab {
 			.addText(text => text
 				.setValue(this.plugin.settings.longBreakInterval.toString())
 				.onChange(value => {
-					this.plugin.settings.longBreakInterval = this.setTimerValue(value, 'longBreakInterval');
+					this.plugin.settings.longBreakInterval = setNumericValue(value, DEFAULT_SETTINGS.longBreakInterval, this.plugin.settings.longBreakInterval);
 					this.plugin.saveSettings();
 				}));
 
 		new Setting(containerEl)
 			.setName('Autostart timer')
-			.setDesc('Start each pomodoro and break automatically. When off, click the ribbon icon in the left to start the next timer')
+			.setDesc('Start each pomodoro and break automatically. When off, click the ribbon icon on the left to start the next timer')
 			.addToggle(toggle => toggle
 					.setValue(this.plugin.settings.autostartTimer)
 					.onChange(value => {
 						this.plugin.settings.autostartTimer = value;
 						this.plugin.saveSettings();
+						this.display() //force refresh
 					}));
+
+		if (this.plugin.settings.autostartTimer === false) {
+			new Setting(containerEl)
+				.setName('Cycles before pause')
+				.setDesc('Number of pomodoro + break cycles to run automatically before stopping. Default is 0 (stops after every pomodoro and break)')
+				.addText(text => text
+					.setValue(this.plugin.settings.numAutoCycles.toString())
+					.onChange(value => {
+						this.plugin.settings.numAutoCycles = setNumericValue(value, DEFAULT_SETTINGS.numAutoCycles, this.plugin.settings.numAutoCycles);
+						this.plugin.cyclesSinceLastAutoStop = 0;
+						this.plugin.saveSettings();
+					}));
+		}
 
 		/**************  Sound settings **************/
 			
@@ -196,43 +212,16 @@ export class PomoSettingTab extends PluginSettingTab {
 					}));
 		}
 	}
+}
 
-
-	//sets the setting for the given timer to value if valid, default if empty, otherwise sends user error notice
-	setTimerValue(value, timer_type: string): number {
-		var timer_settings: number;
-		var timer_default: number;
-
-		switch (timer_type) {
-			case ('pomo'): {
-				timer_settings = this.plugin.settings.pomo;
-				timer_default = DEFAULT_SETTINGS.pomo;
-				break;
-			}
-			case ('shortBreak'): {
-				timer_settings = this.plugin.settings.shortBreak;
-				timer_default = DEFAULT_SETTINGS.shortBreak;
-				break;
-			}
-			case ('longBreak'): {
-				timer_settings = this.plugin.settings.longBreak;
-				timer_default = DEFAULT_SETTINGS.longBreak;
-				break;
-			}
-			case ('longBreakInterval'): {
-				timer_settings = this.plugin.settings.longBreakInterval;
-				timer_default = DEFAULT_SETTINGS.longBreakInterval;
-				break;
-			}
-		}
-
-		if (value === '') { //empty string -> reset to default
-			return timer_default;
-		} else if (!isNaN(Number(value)) && (Number(value) > 0)) { //if positive number, set setting
-			return Number(value);
-		} else { //invalid input
-			new Notice('Please specify a valid number.');
-			return timer_settings;
-		}
+//sets the setting for the given to value if it's a valid, default if empty, otherwise sends user error notice
+function setNumericValue(value: string, default_setting: number, current_setting: number){
+	if (value === '') { //empty string -> reset to default
+		return default_setting;
+	} else if (!isNaN(Number(value)) && (Number(value) > 0)) { //if positive number, set setting
+		return Number(value);
+	} else { //invalid input
+		new Notice('Please specify a valid number.');
+		return current_setting;
 	}
 }

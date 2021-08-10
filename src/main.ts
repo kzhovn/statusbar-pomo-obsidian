@@ -22,6 +22,7 @@ export default class PomoTimer extends Plugin {
 	pausedTime: number;  /*Time left on paused timer, in milliseconds*/
 	paused: boolean;
 	pomosSinceStart: number;
+	cyclesSinceLastAutoStop: number;
 	activeNote: TFile;
 	whiteNoisePlayer: HTMLAudioElement;
 
@@ -37,6 +38,7 @@ export default class PomoTimer extends Plugin {
 		this.mode = Mode.NoTimer;
 		this.paused = false;
 		this.pomosSinceStart = 0;
+		this.cyclesSinceLastAutoStop = 0;
 
 		if (this.settings.whiteNoise === true) {
 			this.whiteNoisePlayer = new Audio(whiteNoiseUrl);
@@ -45,13 +47,14 @@ export default class PomoTimer extends Plugin {
 
 		/*Adds icon to the left side bar which starts the pomo timer when clicked
 		  if no timer is currently running, and otherwise quits current timer*/
-		this.addRibbonIcon('clock', 'Start pomo', () => {
+		this.addRibbonIcon('clock', 'Start pomodoro', () => {
 			if (this.mode === Mode.NoTimer) {  //if starting from not having a timer running/paused
 				this.startTimer(Mode.Pomo);
 			} else if (this.paused === true) { //if paused, start
 				this.restartTimer();
 			} else if (this.paused === false) { //if unpaused, pause
 				this.pauseTimer();
+				new Notice("Timer paused.") //can't do inside pauseTimer() because it's used for autostop
 			}
 		});
 
@@ -126,6 +129,8 @@ export default class PomoTimer extends Plugin {
 					if (this.settings.logging === true) {
 						this.logPomo();
 					}
+				} else if (this.mode === Mode.ShortBreak || this.mode === Mode.LongBreak) {
+					this.cyclesSinceLastAutoStop += 1;
 				}
 				await this.switchMode();
 			}
@@ -218,8 +223,11 @@ export default class PomoTimer extends Plugin {
 			await this.startTimer(Mode.Pomo);
 		}
 
-		if (this.settings.autostartTimer === false) { //if autostart disabled, pause and allow user to start manually
+		console.log(this.cyclesSinceLastAutoStop)
+
+		if (this.settings.autostartTimer === false && this.settings.numAutoCycles <= this.cyclesSinceLastAutoStop) { //if autostart disabled, pause and allow user to start manually
 			await this.pauseTimer();
+			this.cyclesSinceLastAutoStop = 0;
 		}
 	}
 
@@ -295,28 +303,28 @@ export default class PomoTimer extends Plugin {
 	async logPomo(): Promise<void> {
 		var file: TAbstractFile;
 
-		if (this.settings.logToDaily === true) {
+		if (this.settings.logToDaily === true) { //use today's note
 			file = await getDailyNoteFile();
-		} else {
+		} else { //use file given in settings
 			file = this.app.vault.getAbstractFileByPath(this.settings.logFile);
 		}
 
 		var logText = moment().format(this.settings.logText);
 
-		if (this.settings.logActiveNote === true) {
+		if (this.settings.logActiveNote === true) { //append link to note that was active when pomo started
 			logText = logText + " " + this.app.fileManager.generateMarkdownLink(this.activeNote, '');
 		}
 
 		//this is a sin, please fix it so that it checks for being a folder without doing terrible things
 		if (!file) { //if no file, create
-			console.log("Creating file");
+			console.log("Creating pomodoro log file");
 			await this.app.vault.create(this.settings.logFile, "");
 		}
 
 		await this.appendFile(this.settings.logFile, logText);
 	}
 
-	//from Note Refactor plugin
+	//from Note Refactor plugin by James Lynch, https://github.com/lynchjames/note-refactor-obsidian/blob/80c1a23a1352b5d22c70f1b1d915b4e0a1b2b33f/src/obsidian-file.ts#L69
 	async appendFile(filePath: string, note: string) {
 		let existingContent = await this.app.vault.adapter.read(filePath);
 		if (existingContent.length > 0) {
