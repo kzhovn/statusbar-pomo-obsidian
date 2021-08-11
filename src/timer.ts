@@ -275,7 +275,7 @@ export class Timer {
 }
 
 /*Returns [HH:]mm:ss left on the current timer*/
-export function millisecsToString(millisecs: number): string {
+function millisecsToString(millisecs: number): string {
 	let formatedCountDown: string;
 
 	if (millisecs >= 60 * 60 * 1000) { /* >= 1 hour*/
@@ -287,7 +287,7 @@ export function millisecsToString(millisecs: number): string {
 	return formatedCountDown.toString();
 }
 
-export async function playNotification() {
+async function playNotification() {
 	const audio = new Audio(notificationUrl);
 	audio.play();
 }

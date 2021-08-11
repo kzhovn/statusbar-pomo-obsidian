@@ -1,6 +1,6 @@
 import { Plugin } from 'obsidian';
 import { PomoSettingTab, PomoSettings, DEFAULT_SETTINGS } from './settings';
-import { Mode, Timer } from './timer';
+import { getDailyNoteFile, Mode, Timer } from './timer';
 
 
 export default class PomoTimerPlugin extends Plugin {
@@ -15,7 +15,23 @@ export default class PomoTimerPlugin extends Plugin {
 		this.addSettingTab(new PomoSettingTab(this.app, this));
 
 		this.statusBar = this.addStatusBarItem();
-		this.statusBar.addClass("statusbar-pomo")
+		this.statusBar.addClass("statusbar-pomo");
+		if (this.settings.logging === true) { //on click, open log file; from Day Planner https://github.com/lynchjames/obsidian-day-planner/blob/c8d4d33af294bde4586a943463e8042c0f6a3a2d/src/status-bar.ts#L53
+			this.statusBar.onClickEvent(async (ev: any) => {
+				try {
+					var file: string;
+					if (this.settings.logToDaily === true) {
+						file = (await getDailyNoteFile()).path;
+					} else {
+						file = this.settings.logFile;
+					}
+					
+					this.app.workspace.openLinkText(file, '', false);
+				} catch (error) {
+					console.log(error)
+				}
+			});
+		}
 
 		this.timer = new Timer(this);
 
@@ -76,6 +92,8 @@ export default class PomoTimerPlugin extends Plugin {
 			}
 		});
 	}
+
+
 
 	/**************  Meta  **************/
 
