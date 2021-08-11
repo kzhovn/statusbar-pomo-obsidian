@@ -1,4 +1,4 @@
-import { Notice, Plugin, moment, TFile, TAbstractFile, TFolder } from 'obsidian';
+import { Notice, Plugin, moment, TFile, TFolder } from 'obsidian';
 import { PomoSettingTab, PomoSettings, DEFAULT_SETTINGS } from './settings';
 import type { Moment } from 'moment';
 import { notificationUrl, whiteNoiseUrl } from './audio_urls';
