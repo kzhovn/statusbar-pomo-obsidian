@@ -11,6 +11,7 @@ export interface PomoSettings {
 	autostartTimer: boolean;
 	numAutoCycles: number;
 	notificationSound: boolean;
+	backgroundNoiseFile: string;
 	logging: boolean;
 	logFile: string;
 	logText: string;
@@ -28,6 +29,7 @@ export const DEFAULT_SETTINGS: PomoSettings = {
 	autostartTimer: true,
 	numAutoCycles: 0,
 	notificationSound: true,
+	backgroundNoiseFile: "",
 	logging: false,
 	logFile: "Pomodoro Log.md",
 	logToDaily: false,
@@ -107,7 +109,7 @@ export class PomoSettingTab extends PluginSettingTab {
 		if (this.plugin.settings.autostartTimer === false) {
 			new Setting(containerEl)
 				.setName('Cycles before pause')
-				.setDesc('Number of pomodoro + break cycles to run automatically before stopping. Default is 0 (stops after every pomodoro and break)')
+				.setDesc('Number of pomodoro + break cycles to run automatically before stopping. Default is 0 (stops after every pomodoro and every break)')
 				.addText(text => text
 					.setValue(this.plugin.settings.numAutoCycles.toString())
 					.onChange(value => {
@@ -139,12 +141,13 @@ export class PomoSettingTab extends PluginSettingTab {
 						this.plugin.saveSettings();
 
 						if (this.plugin.settings.whiteNoise === true) {
-							this.plugin.whiteNoisePlayer = new Audio(whiteNoiseUrl);
-							this.plugin.whiteNoisePlayer.loop = true;
+							this.plugin.initWhiteNoise(whiteNoiseUrl);
 							this.plugin.whiteNoise()
 						} else { //if false, turn it off immediately
 							this.plugin.stopWhiteNoise();
 						}
+
+						this.display();
 					}));
 
 
@@ -166,7 +169,7 @@ export class PomoSettingTab extends PluginSettingTab {
 
 			new Setting(containerEl)
 				.setName('Log file')
-				.setDesc(`If file doesn't already exist, it will be created; leave blank for current file, ${this.plugin.settings.logFile}.`)
+				.setDesc(`If file doesn't already exist, it will be created`)
 				.addText(text => text
 					.setValue(this.plugin.settings.logFile.toString())
 					.onChange(value => {

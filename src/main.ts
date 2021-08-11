@@ -1,8 +1,9 @@
-import { Notice, Plugin, moment, TFile, TAbstractFile } from 'obsidian';
+import { Notice, Plugin, moment, TFile, TAbstractFile, TFolder } from 'obsidian';
 import { PomoSettingTab, PomoSettings, DEFAULT_SETTINGS } from './settings';
 import type { Moment } from 'moment';
 import { notificationUrl, whiteNoiseUrl } from './audio_urls';
 import { getDailyNote, createDailyNote, getAllDailyNotes } from 'obsidian-daily-notes-interface';
+import * as path from 'path';
 
 enum Mode {
 	Pomo,
@@ -41,8 +42,7 @@ export default class PomoTimer extends Plugin {
 		this.cyclesSinceLastAutoStop = 0;
 
 		if (this.settings.whiteNoise === true) {
-			this.whiteNoisePlayer = new Audio(whiteNoiseUrl);
-			this.whiteNoisePlayer.loop = true;
+			this.initWhiteNoise(whiteNoiseUrl);
 		}
 
 		/*Adds icon to the left side bar which starts the pomo timer when clicked
@@ -165,7 +165,7 @@ export default class PomoTimer extends Plugin {
 
 		if (this.settings.whiteNoise === true) {
 			this.stopWhiteNoise();
-		}	
+		}
 	}
 
 	async restartTimer(): Promise<void> {
@@ -190,8 +190,8 @@ export default class PomoTimer extends Plugin {
 
 		this.setStartEndTime(this.getTotalModeMillisecs());
 		await this.modeStartingNotification();
-		
-		if (this.settings.whiteNoise === true) { 
+
+		if (this.settings.whiteNoise === true) {
 			this.whiteNoise()
 		}
 	}
@@ -215,15 +215,13 @@ export default class PomoTimer extends Plugin {
 
 		if (this.mode === Mode.Pomo) {
 			if (this.pomosSinceStart % this.settings.longBreakInterval === 0) {
-					await this.startTimer(Mode.LongBreak);
-				} else {
-					await this.startTimer(Mode.ShortBreak);
-				}
+				await this.startTimer(Mode.LongBreak);
+			} else {
+				await this.startTimer(Mode.ShortBreak);
+			}
 		} else { //short break. long break, or no timer
 			await this.startTimer(Mode.Pomo);
 		}
-
-		console.log(this.cyclesSinceLastAutoStop)
 
 		if (this.settings.autostartTimer === false && this.settings.numAutoCycles <= this.cyclesSinceLastAutoStop) { //if autostart disabled, pause and allow user to start manually
 			await this.pauseTimer();
@@ -301,27 +299,30 @@ export default class PomoTimer extends Plugin {
 	/**************  Logging  **************/
 
 	async logPomo(): Promise<void> {
-		var file: TAbstractFile;
-
-		if (this.settings.logToDaily === true) { //use today's note
-			file = await getDailyNoteFile();
-		} else { //use file given in settings
-			file = this.app.vault.getAbstractFileByPath(this.settings.logFile);
-		}
-
 		var logText = moment().format(this.settings.logText);
 
 		if (this.settings.logActiveNote === true) { //append link to note that was active when pomo started
 			logText = logText + " " + this.app.fileManager.generateMarkdownLink(this.activeNote, '');
 		}
 
-		//this is a sin, please fix it so that it checks for being a folder without doing terrible things
-		if (!file) { //if no file, create
-			console.log("Creating pomodoro log file");
-			await this.app.vault.create(this.settings.logFile, "");
+
+		if (this.settings.logToDaily === true) { //use today's note
+			let file = (await getDailyNoteFile()).path;
+			await this.appendFile(file, logText);
+		} else { //use file given in settings
+			let file = this.app.vault.getAbstractFileByPath(this.settings.logFile);
+
+			if (!file || file! instanceof TFolder) { //if no file, create
+				console.log(file);
+				await this.app.vault.create(this.settings.logFile, "");
+			}
+
+			await this.appendFile(this.settings.logFile, logText)
 		}
 
-		await this.appendFile(this.settings.logFile, logText);
+
+
+
 	}
 
 	//from Note Refactor plugin by James Lynch, https://github.com/lynchjames/note-refactor-obsidian/blob/80c1a23a1352b5d22c70f1b1d915b4e0a1b2b33f/src/obsidian-file.ts#L69
@@ -332,7 +333,7 @@ export default class PomoTimer extends Plugin {
 		}
 		await this.app.vault.adapter.write(filePath, existingContent + note);
 	}
-	
+
 
 
 
@@ -349,6 +350,11 @@ export default class PomoTimer extends Plugin {
 		} else {
 			this.stopWhiteNoise();
 		}
+	}
+
+	initWhiteNoise(whiteNoiseUrl: string) {
+		this.whiteNoisePlayer = new Audio(whiteNoiseUrl);
+		this.whiteNoisePlayer.loop = true;
 	}
 
 
