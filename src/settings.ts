@@ -161,6 +161,13 @@ export class PomoSettingTab extends PluginSettingTab {
 					.setValue(this.plugin.settings.logging)
 					.onChange(async value => {
 						this.plugin.settings.logging = value;
+
+						if (value === true) {
+							this.plugin.openLogFileOnClick();
+						} else {
+							
+						}
+
 						this.plugin.saveSettings();
 						this.display(); //force refresh
 					}));
