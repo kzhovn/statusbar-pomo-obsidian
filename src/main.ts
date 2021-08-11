@@ -3,16 +3,8 @@ import { PomoSettingTab, PomoSettings, DEFAULT_SETTINGS } from './settings';
 import type { Moment } from 'moment';
 import { notificationUrl, whiteNoiseUrl } from './audio_urls';
 import { getDailyNote, createDailyNote, getAllDailyNotes } from 'obsidian-daily-notes-interface';
-import * as path from 'path';
-
-enum Mode {
-	Pomo,
-	ShortBreak,
-	LongBreak,
-	NoTimer,
-}
-
-const MILLISECS_IN_MINUTE = 60 * 1000;
+import { WhiteNoise } from './white_noise';
+import { Mode, MILLISECS_IN_MINUTE } from './consts_defs';
 
 export default class PomoTimer extends Plugin {
 	settings: PomoSettings;
@@ -25,7 +17,7 @@ export default class PomoTimer extends Plugin {
 	pomosSinceStart: number;
 	cyclesSinceLastAutoStop: number;
 	activeNote: TFile;
-	whiteNoisePlayer: HTMLAudioElement;
+	whiteNoisePlayer: WhiteNoise;
 
 	async onload() {
 		console.log('Loading status bar pomodoro timer');
@@ -42,7 +34,7 @@ export default class PomoTimer extends Plugin {
 		this.cyclesSinceLastAutoStop = 0;
 
 		if (this.settings.whiteNoise === true) {
-			this.initWhiteNoise(whiteNoiseUrl);
+			this.whiteNoisePlayer = new WhiteNoise(this, whiteNoiseUrl);
 		}
 
 		/*Adds icon to the left side bar which starts the pomo timer when clicked
@@ -105,6 +97,7 @@ export default class PomoTimer extends Plugin {
 							this.restartTimer();
 						} else if (this.mode !== Mode.NoTimer) { //if some timer running
 							this.pauseTimer();
+							new Notice("Timer paused.")
 						}
 					}
 					return true;
@@ -153,7 +146,7 @@ export default class PomoTimer extends Plugin {
 		this.pomosSinceStart = 0;
 
 		if (this.settings.whiteNoise === true) {
-			this.stopWhiteNoise();
+			this.whiteNoisePlayer.stopWhiteNoise();
 		}
 
 		await this.loadSettings();
@@ -164,7 +157,7 @@ export default class PomoTimer extends Plugin {
 		this.pausedTime = this.getCountdown();
 
 		if (this.settings.whiteNoise === true) {
-			this.stopWhiteNoise();
+			this.whiteNoisePlayer.stopWhiteNoise();
 		}
 	}
 
@@ -174,7 +167,7 @@ export default class PomoTimer extends Plugin {
 		this.paused = false;
 
 		if (this.settings.whiteNoise === true) {
-			this.whiteNoise();
+			this.whiteNoisePlayer.whiteNoise();
 		}
 	}
 
@@ -192,7 +185,7 @@ export default class PomoTimer extends Plugin {
 		await this.modeStartingNotification();
 
 		if (this.settings.whiteNoise === true) {
-			this.whiteNoise()
+			this.whiteNoisePlayer.whiteNoise()
 		}
 	}
 
@@ -305,7 +298,6 @@ export default class PomoTimer extends Plugin {
 			logText = logText + " " + this.app.fileManager.generateMarkdownLink(this.activeNote, '');
 		}
 
-
 		if (this.settings.logToDaily === true) { //use today's note
 			let file = (await getDailyNoteFile()).path;
 			await this.appendFile(file, logText);
@@ -330,28 +322,6 @@ export default class PomoTimer extends Plugin {
 		await this.app.vault.adapter.write(filePath, existingContent + note);
 	}
 
-
-
-
-	/**************  Audio  **************/
-
-	stopWhiteNoise() {
-		this.whiteNoisePlayer.pause();
-		this.whiteNoisePlayer.currentTime = 0;
-	}
-
-	whiteNoise() {
-		if (this.mode === Mode.Pomo && this.paused === false) {
-			this.whiteNoisePlayer.play();
-		} else {
-			this.stopWhiteNoise();
-		}
-	}
-
-	initWhiteNoise(whiteNoiseUrl: string) {
-		this.whiteNoisePlayer = new Audio(whiteNoiseUrl);
-		this.whiteNoisePlayer.loop = true;
-	}
 
 
 

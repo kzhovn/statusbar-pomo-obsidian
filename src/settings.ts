@@ -2,6 +2,7 @@ import { App, Notice, PluginSettingTab, Setting } from 'obsidian';
 import { appHasDailyNotesPluginLoaded } from 'obsidian-daily-notes-interface';
 import { whiteNoiseUrl } from './audio_urls';
 import PomoTimer from './main';
+import { WhiteNoise } from './white_noise';
 
 export interface PomoSettings {
 	pomo: number;
@@ -141,10 +142,10 @@ export class PomoSettingTab extends PluginSettingTab {
 						this.plugin.saveSettings();
 
 						if (this.plugin.settings.whiteNoise === true) {
-							this.plugin.initWhiteNoise(whiteNoiseUrl);
-							this.plugin.whiteNoise()
+							this.plugin.whiteNoisePlayer = new WhiteNoise(this.plugin, whiteNoiseUrl);
+							this.plugin.whiteNoisePlayer.whiteNoise()
 						} else { //if false, turn it off immediately
-							this.plugin.stopWhiteNoise();
+							this.plugin.whiteNoisePlayer.stopWhiteNoise();
 						}
 
 						this.display();
