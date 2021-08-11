@@ -313,16 +313,12 @@ export default class PomoTimer extends Plugin {
 			let file = this.app.vault.getAbstractFileByPath(this.settings.logFile);
 
 			if (!file || file! instanceof TFolder) { //if no file, create
-				console.log(file);
+				console.log("Creating pomodoro log file")
 				await this.app.vault.create(this.settings.logFile, "");
 			}
 
 			await this.appendFile(this.settings.logFile, logText)
 		}
-
-
-
-
 	}
 
 	//from Note Refactor plugin by James Lynch, https://github.com/lynchjames/note-refactor-obsidian/blob/80c1a23a1352b5d22c70f1b1d915b4e0a1b2b33f/src/obsidian-file.ts#L69
