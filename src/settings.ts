@@ -1,7 +1,8 @@
 import { App, Notice, PluginSettingTab, Setting } from 'obsidian';
 import { appHasDailyNotesPluginLoaded } from 'obsidian-daily-notes-interface';
 import { whiteNoiseUrl } from './audio_urls';
-import PomoTimer from './main';
+import PomoTimerPlugin from './main';
+import { Timer } from './timer';
 import { WhiteNoise } from './white_noise';
 
 export interface PomoSettings {
@@ -41,9 +42,9 @@ export const DEFAULT_SETTINGS: PomoSettings = {
 }
 
 export class PomoSettingTab extends PluginSettingTab {
-	plugin: PomoTimer;
+	plugin: PomoTimerPlugin;
 
-	constructor(app: App, plugin: PomoTimer) {
+	constructor(app: App, plugin: PomoTimerPlugin) {
 		super(app, plugin);
 		this.plugin = plugin;
 	}
@@ -115,7 +116,7 @@ export class PomoSettingTab extends PluginSettingTab {
 					.setValue(this.plugin.settings.numAutoCycles.toString())
 					.onChange(value => {
 						this.plugin.settings.numAutoCycles = setNumericValue(value, DEFAULT_SETTINGS.numAutoCycles, this.plugin.settings.numAutoCycles);
-						this.plugin.cyclesSinceLastAutoStop = 0;
+						this.plugin.timer.cyclesSinceLastAutoStop = 0;
 						this.plugin.saveSettings();
 					}));
 		}
@@ -142,10 +143,10 @@ export class PomoSettingTab extends PluginSettingTab {
 						this.plugin.saveSettings();
 
 						if (this.plugin.settings.whiteNoise === true) {
-							this.plugin.whiteNoisePlayer = new WhiteNoise(this.plugin, whiteNoiseUrl);
-							this.plugin.whiteNoisePlayer.whiteNoise()
+							this.plugin.timer.whiteNoisePlayer = new WhiteNoise(this.plugin, whiteNoiseUrl);
+							this.plugin.timer.whiteNoisePlayer.whiteNoise()
 						} else { //if false, turn it off immediately
-							this.plugin.whiteNoisePlayer.stopWhiteNoise();
+							this.plugin.timer.whiteNoisePlayer.stopWhiteNoise();
 						}
 
 						this.display();

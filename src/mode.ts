@@ -7,4 +7,3 @@ export enum Mode {
 	LongBreak,
 	NoTimer
 }
-export const MILLISECS_IN_MINUTE = 60 * 1000;

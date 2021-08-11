@@ -1,23 +1,13 @@
-import { Notice, Plugin, moment, TFile, TFolder } from 'obsidian';
+import { Plugin } from 'obsidian';
 import { PomoSettingTab, PomoSettings, DEFAULT_SETTINGS } from './settings';
-import type { Moment } from 'moment';
-import { notificationUrl, whiteNoiseUrl } from './audio_urls';
-import { getDailyNote, createDailyNote, getAllDailyNotes } from 'obsidian-daily-notes-interface';
-import { WhiteNoise } from './white_noise';
-import { Mode, MILLISECS_IN_MINUTE } from './consts_defs';
+import { Mode } from './mode';
+import { Timer } from './timer';
 
-export default class PomoTimer extends Plugin {
+
+export default class PomoTimerPlugin extends Plugin {
 	settings: PomoSettings;
 	statusBar: HTMLElement;
-	startTime: Moment; /*when currently running timer started*/
-	endTime: Moment;   /*when currently running timer will end if not paused*/
-	mode: Mode;
-	pausedTime: number;  /*Time left on paused timer, in milliseconds*/
-	paused: boolean;
-	pomosSinceStart: number;
-	cyclesSinceLastAutoStop: number;
-	activeNote: TFile;
-	whiteNoisePlayer: WhiteNoise;
+	timer: Timer;
 
 	async onload() {
 		console.log('Loading status bar pomodoro timer');
@@ -28,33 +18,19 @@ export default class PomoTimer extends Plugin {
 		this.statusBar = this.addStatusBarItem();
 		this.statusBar.addClass("statusbar-pomo")
 
-		this.mode = Mode.NoTimer;
-		this.paused = false;
-		this.pomosSinceStart = 0;
-		this.cyclesSinceLastAutoStop = 0;
-
-		if (this.settings.whiteNoise === true) {
-			this.whiteNoisePlayer = new WhiteNoise(this, whiteNoiseUrl);
-		}
+		this.timer = new Timer(this);
 
 		/*Adds icon to the left side bar which starts the pomo timer when clicked
 		  if no timer is currently running, and otherwise quits current timer*/
-		this.addRibbonIcon('clock', 'Start pomodoro', () => {
-			if (this.mode === Mode.NoTimer) {  //if starting from not having a timer running/paused
-				this.startTimer(Mode.Pomo);
-			} else if (this.paused === true) { //if paused, start
-				this.restartTimer();
-			} else if (this.paused === false) { //if unpaused, pause
-				this.pauseTimer();
-				new Notice("Timer paused.") //can't do inside pauseTimer() because it's used for autostop
-			}
+		this.addRibbonIcon('clock', 'Start pomodoro', async () => {
+			await this.timer.onRibbonIconClick();
 		});
 
 		/*Update status bar timer ever half second
 		  Ideally should change so only updating when in timer mode
 		  - regular conditional doesn't remove after quit, need unload*/
 		this.registerInterval(window.setInterval(async () =>
-			this.statusBar.setText(await this.setStatusBarText()), 500));
+			this.statusBar.setText(await this.timer.setStatusBarText()), 500));
 
 		this.addCommand({
 			id: 'start-satusbar-pomo',
@@ -63,7 +39,7 @@ export default class PomoTimer extends Plugin {
 				let leaf = this.app.workspace.activeLeaf;
 				if (leaf) {
 					if (!checking) { //start pomo
-						this.startTimer(Mode.Pomo);
+						this.timer.startTimer(Mode.Pomo);
 					}
 					return true;
 				}
@@ -76,9 +52,9 @@ export default class PomoTimer extends Plugin {
 			name: 'Quit timer',
 			checkCallback: (checking: boolean) => {
 				let leaf = this.app.workspace.activeLeaf;
-				if (leaf) {
+				if (leaf && this.timer.mode !== Mode.NoTimer) {
 					if (!checking) {
-						this.quitTimer();
+						this.timer.quitTimer();
 					}
 					return true;
 				}
@@ -91,14 +67,9 @@ export default class PomoTimer extends Plugin {
 			name: 'Toggle timer pause',
 			checkCallback: (checking: boolean) => {
 				let leaf = this.app.workspace.activeLeaf;
-				if (leaf) {
+				if (leaf && this.timer.mode !== Mode.NoTimer) {
 					if (!checking) {
-						if (this.paused === true) {
-							this.restartTimer();
-						} else if (this.mode !== Mode.NoTimer) { //if some timer running
-							this.pauseTimer();
-							new Notice("Timer paused.")
-						}
+						this.timer.togglePause();
 					}
 					return true;
 				}
@@ -107,228 +78,10 @@ export default class PomoTimer extends Plugin {
 		});
 	}
 
-	/*Set status bar to remaining time or empty string if no timer is running*/
-	//handling switching logic here, should spin out
-	async setStatusBarText(): Promise<string> {
-		if (this.mode !== Mode.NoTimer) {
-			if (this.paused === true) {
-				return millisecsToString(this.pausedTime);
-			}
-			/*if reaching the end of the current timer, switch to the next one (e.g. pomo -> break)*/
-			else if (moment().isSameOrAfter(this.endTime)) {
-				if (this.mode === Mode.Pomo) { /*completed another pomo*/
-					this.pomosSinceStart += 1;
-
-					if (this.settings.logging === true) {
-						this.logPomo();
-					}
-				} else if (this.mode === Mode.ShortBreak || this.mode === Mode.LongBreak) {
-					this.cyclesSinceLastAutoStop += 1;
-				}
-				await this.switchMode();
-			}
-
-			return millisecsToString(this.getCountdown());
-		} else {
-			return ""; //fixes TypeError: failed to execute 'appendChild' on 'Node https://github.com/kzhovn/statusbar-pomo-obsidian/issues/4
-		}
-	}
-
-
-
-	/**************  Timer  **************/
-
-	async quitTimer(): Promise<void> {
-		this.mode = Mode.NoTimer;
-		this.startTime = moment(0);
-		this.endTime = moment(0);
-		this.paused = false;
-		this.pomosSinceStart = 0;
-
-		if (this.settings.whiteNoise === true) {
-			this.whiteNoisePlayer.stopWhiteNoise();
-		}
-
-		await this.loadSettings();
-	}
-
-	async pauseTimer(): Promise<void> {
-		this.paused = true;
-		this.pausedTime = this.getCountdown();
-
-		if (this.settings.whiteNoise === true) {
-			this.whiteNoisePlayer.stopWhiteNoise();
-		}
-	}
-
-	async restartTimer(): Promise<void> {
-		this.setStartEndTime(this.pausedTime);
-		await this.modeRestartingNotification();
-		this.paused = false;
-
-		if (this.settings.whiteNoise === true) {
-			this.whiteNoisePlayer.whiteNoise();
-		}
-	}
-
-	async startTimer(mode: Mode): Promise<void> {
-		this.mode = mode;
-
-		if (this.settings.logActiveNote === true) {
-			const activeView = this.app.workspace.getActiveFile();
-			if (activeView) {
-				this.activeNote = activeView;
-			}
-		}
-
-		this.setStartEndTime(this.getTotalModeMillisecs());
-		await this.modeStartingNotification();
-
-		if (this.settings.whiteNoise === true) {
-			this.whiteNoisePlayer.whiteNoise()
-		}
-	}
-
-	setStartEndTime(millisecsLeft: number): void {
-		this.startTime = moment(); //start time to current time
-		this.endTime = moment().add(millisecsLeft, 'milliseconds');
-	}
-
-	/*Return milliseconds left until end of timer*/
-	getCountdown(): number {
-		let endTimeClone = this.endTime.clone(); //rewrite with freeze?
-		return endTimeClone.diff(moment());
-	}
-
-	/*switch from pomos to long or short breaks as appropriate*/
-	async switchMode(): Promise<void> {
-		if (this.settings.notificationSound === true) { //play sound end of timer
-			await playNotification();
-		}
-
-		if (this.mode === Mode.Pomo) {
-			if (this.pomosSinceStart % this.settings.longBreakInterval === 0) {
-				await this.startTimer(Mode.LongBreak);
-			} else {
-				await this.startTimer(Mode.ShortBreak);
-			}
-		} else { //short break. long break, or no timer
-			await this.startTimer(Mode.Pomo);
-		}
-
-		if (this.settings.autostartTimer === false && this.settings.numAutoCycles <= this.cyclesSinceLastAutoStop) { //if autostart disabled, pause and allow user to start manually
-			await this.pauseTimer();
-			this.cyclesSinceLastAutoStop = 0;
-		}
-	}
-
-	getTotalModeMillisecs(): number {
-		switch (this.mode) {
-			case Mode.Pomo: {
-				return this.settings.pomo * MILLISECS_IN_MINUTE;
-			}
-			case Mode.ShortBreak: {
-				return this.settings.shortBreak * MILLISECS_IN_MINUTE;
-			}
-			case Mode.LongBreak: {
-				return this.settings.longBreak * MILLISECS_IN_MINUTE;
-			}
-			case Mode.NoTimer: {
-				throw new Error("Mode NoTimer does not have an associated time value")
-			}
-		}
-	}
-
-
-
-	/**************  Notifications  **************/
-
-	/*Sends notification corresponding to whatever the mode is at the moment it's called*/
-	async modeStartingNotification(): Promise<void> {
-		let time = this.getTotalModeMillisecs();
-		let unit: string;
-
-		if (time >= MILLISECS_IN_MINUTE) { /*display in minutes*/
-			time = Math.floor(time / MILLISECS_IN_MINUTE);
-			unit = 'minute';
-		} else { /*less than a minute, display in seconds*/
-			time = Math.floor(time / 1000); //convert to secs
-			unit = 'second';
-		}
-
-		switch (this.mode) {
-			case (Mode.Pomo): {
-				new Notice(`Starting ${time} ${unit} pomodoro.`);
-				break;
-			}
-			case (Mode.ShortBreak):
-			case (Mode.LongBreak): {
-				new Notice(`Starting ${time} ${unit} break.`);
-				break;
-			}
-			case (Mode.NoTimer): {
-				new Notice('Quitting pomodoro timer.');
-				break;
-			}
-		}
-	}
-
-	async modeRestartingNotification(): Promise<void> {
-		switch (this.mode) {
-			case (Mode.Pomo): {
-				new Notice(`Restarting pomodoro.`);
-				break;
-			}
-			case (Mode.ShortBreak):
-			case (Mode.LongBreak): {
-				new Notice(`Restarting break.`);
-				break;
-			}
-		}
-	}
-
-
-
-	/**************  Logging  **************/
-
-	async logPomo(): Promise<void> {
-		var logText = moment().format(this.settings.logText);
-
-		if (this.settings.logActiveNote === true) { //append link to note that was active when pomo started
-			logText = logText + " " + this.app.fileManager.generateMarkdownLink(this.activeNote, '');
-		}
-
-		if (this.settings.logToDaily === true) { //use today's note
-			let file = (await getDailyNoteFile()).path;
-			await this.appendFile(file, logText);
-		} else { //use file given in settings
-			let file = this.app.vault.getAbstractFileByPath(this.settings.logFile);
-
-			if (!file || file! instanceof TFolder) { //if no file, create
-				console.log("Creating pomodoro log file")
-				await this.app.vault.create(this.settings.logFile, "");
-			}
-
-			await this.appendFile(this.settings.logFile, logText)
-		}
-	}
-
-	//from Note Refactor plugin by James Lynch, https://github.com/lynchjames/note-refactor-obsidian/blob/80c1a23a1352b5d22c70f1b1d915b4e0a1b2b33f/src/obsidian-file.ts#L69
-	async appendFile(filePath: string, note: string) {
-		let existingContent = await this.app.vault.adapter.read(filePath);
-		if (existingContent.length > 0) {
-			existingContent = existingContent + '\r';
-		}
-		await this.app.vault.adapter.write(filePath, existingContent + note);
-	}
-
-
-
-
 	/**************  Meta  **************/
 
 	onunload() {
-		this.quitTimer();
+		this.timer.quitTimer();
 		console.log('Unloading status bar pomodoro timer');
 	}
 
@@ -340,36 +93,3 @@ export default class PomoTimer extends Plugin {
 		await this.saveData(this.settings);
 	}
 }
-
-/*Returns [HH:]mm:ss left on the current timer*/
-function millisecsToString(millisecs: number): string {
-	let formatedCountDown: string;
-
-	if (millisecs >= 60 * 60 * 1000) { /* >= 1 hour*/
-		formatedCountDown = moment.utc(millisecs).format('HH:mm:ss');
-	} else {
-		formatedCountDown = moment.utc(millisecs).format('mm:ss');
-	}
-
-	return formatedCountDown.toString();
-}
-
-async function playNotification() {
-	const audio = new Audio(notificationUrl);
-	audio.play();
-}
-
-async function getDailyNoteFile(): Promise<TFile> {
-	const file = getDailyNote(moment(), getAllDailyNotes());
-
-	if (!file) {
-		return await createDailyNote(moment());
-	}
-
-	return file;
-}
-
-
-
-
-

@@ -1,11 +1,11 @@
-import PomoTimer from './main';
-import { Mode } from './consts_defs'
+import PomoTimerPlugin from './main';
+import { Mode } from './mode'
 
 export class WhiteNoise {
-	plugin: PomoTimer;
+	plugin: PomoTimerPlugin;
 	whiteNoisePlayer: HTMLAudioElement;
 
-	constructor(plugin: PomoTimer, whiteNoiseUrl: string) {
+	constructor(plugin: PomoTimerPlugin, whiteNoiseUrl: string) {
 		this.plugin = plugin;
 		this.whiteNoisePlayer = new Audio(whiteNoiseUrl);
 		this.whiteNoisePlayer.loop = true;
@@ -17,7 +17,7 @@ export class WhiteNoise {
 	}
 
 	whiteNoise() {
-		if (this.plugin.mode === Mode.Pomo && this.plugin.paused === false) {
+		if (this.plugin.timer.mode === Mode.Pomo && this.plugin.timer.paused === false) {
 			this.whiteNoisePlayer.play();
 		} else {
 			this.stopWhiteNoise();
