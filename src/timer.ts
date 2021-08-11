@@ -4,12 +4,17 @@ import type { Moment } from 'moment';
 
 import { notificationUrl, whiteNoiseUrl } from './audio_urls';
 import { WhiteNoise } from './white_noise';
-import { Mode } from './mode';
 import { PomoSettings } from './settings';
 import PomoTimerPlugin from './main';
 
 const MILLISECS_IN_MINUTE = 60 * 1000;
 
+export enum Mode {
+	Pomo,
+	ShortBreak,
+	LongBreak,
+	NoTimer
+}
 
 export class Timer {
 	plugin: PomoTimerPlugin;

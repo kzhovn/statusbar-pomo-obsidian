@@ -1,5 +1,5 @@
 import PomoTimerPlugin from './main';
-import { Mode } from './mode'
+import { Mode } from './timer'
 
 export class WhiteNoise {
 	plugin: PomoTimerPlugin;

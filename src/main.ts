@@ -1,7 +1,6 @@
 import { Plugin } from 'obsidian';
 import { PomoSettingTab, PomoSettings, DEFAULT_SETTINGS } from './settings';
-import { Mode } from './mode';
-import { Timer } from './timer';
+import { Mode, Timer } from './timer';
 
 
 export default class PomoTimerPlugin extends Plugin {

@@ -2,7 +2,6 @@ import { App, Notice, PluginSettingTab, Setting } from 'obsidian';
 import { appHasDailyNotesPluginLoaded } from 'obsidian-daily-notes-interface';
 import { whiteNoiseUrl } from './audio_urls';
 import PomoTimerPlugin from './main';
-import { Timer } from './timer';
 import { WhiteNoise } from './white_noise';
 
 export interface PomoSettings {
