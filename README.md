@@ -23,5 +23,7 @@ If you enable logging, the plugin will write to the file you specify as your log
 
 "Log active note" will include a link to the active note at the time the pomodoro timer started in the log message.
 
+You can open the current log file by clicking the timer.
+
 ## Compatability
 Tested on Linux from Obsidian 0.9.12, but should work on other OSes and older Obsidian versions.
