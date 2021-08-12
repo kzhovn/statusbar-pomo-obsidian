@@ -25,9 +25,11 @@ export default class PomoTimerPlugin extends Plugin {
 
 		/*Adds icon to the left side bar which starts the pomo timer when clicked
 		  if no timer is currently running, and otherwise quits current timer*/
-		this.addRibbonIcon('clock', 'Start pomodoro', async () => {
-			await this.timer.onRibbonIconClick();
-		});
+		if (this.settings.ribbonIcon === true) {
+			this.addRibbonIcon('clock', 'Start pomodoro', async () => {
+				await this.timer.onRibbonIconClick();
+			});
+		}
 
 		/*Update status bar timer ever half second
 		  Ideally should change so only updating when in timer mode

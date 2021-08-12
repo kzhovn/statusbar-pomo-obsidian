@@ -11,6 +11,7 @@ export interface PomoSettings {
 	longBreakInterval: number;
 	autostartTimer: boolean;
 	numAutoCycles: number;
+	ribbonIcon: boolean;
 	notificationSound: boolean;
 	backgroundNoiseFile: string;
 	logging: boolean;
@@ -29,6 +30,7 @@ export const DEFAULT_SETTINGS: PomoSettings = {
 	longBreakInterval: 4,
 	autostartTimer: true,
 	numAutoCycles: 0,
+	ribbonIcon: true,
 	notificationSound: true,
 	backgroundNoiseFile: "",
 	logging: false,
@@ -97,8 +99,18 @@ export class PomoSettingTab extends PluginSettingTab {
 				}));
 
 		new Setting(containerEl)
+			.setName('Sidebar icon')
+			.setDesc('Toggle left sidebar icon. Restart Obsidian for the change to take effect')
+			.addToggle(toggle => toggle
+					.setValue(this.plugin.settings.ribbonIcon)
+					.onChange(value => {
+						this.plugin.settings.ribbonIcon = value;
+						this.plugin.saveSettings();
+					}));
+
+		new Setting(containerEl)
 			.setName('Autostart timer')
-			.setDesc('Start each pomodoro and break automatically. When off, click the ribbon icon on the left to start the next timer')
+			.setDesc('Start each pomodoro and break automatically. When off, click the sidebar icon on the left or use the toggle pause command to start the next timer')
 			.addToggle(toggle => toggle
 					.setValue(this.plugin.settings.autostartTimer)
 					.onChange(value => {
@@ -119,6 +131,9 @@ export class PomoSettingTab extends PluginSettingTab {
 						this.plugin.saveSettings();
 					}));
 		}
+
+
+
 
 		/**************  Sound settings **************/
 			
@@ -165,7 +180,7 @@ export class PomoSettingTab extends PluginSettingTab {
 						if (value === true) {
 							this.plugin.openLogFileOnClick();
 						} else {
-							
+
 						}
 
 						this.plugin.saveSettings();
