@@ -92,6 +92,8 @@ export default class PomoTimerPlugin extends Plugin {
 
 //on click, open log file; from Day Planner https://github.com/lynchjames/obsidian-day-planner/blob/c8d4d33af294bde4586a943463e8042c0f6a3a2d/src/status-bar.ts#L53
 	openLogFileOnClick() {
+		this.statusBar.addClass("statusbar-pomo-logging");
+
 		this.statusBar.onClickEvent(async (ev: any) => {
 			if (this.settings.logging === true) { //this is hacky, ideally I'd just unwatch the onClickEvent as soon as I turned logging off
 				try {

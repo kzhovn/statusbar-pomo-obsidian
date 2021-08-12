@@ -180,7 +180,7 @@ export class PomoSettingTab extends PluginSettingTab {
 						if (value === true) {
 							this.plugin.openLogFileOnClick();
 						} else {
-
+							this.plugin.statusBar.removeClass("statusbar-pomo-logging")
 						}
 
 						this.plugin.saveSettings();

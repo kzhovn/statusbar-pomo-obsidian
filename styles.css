@@ -6,6 +6,13 @@
 * https://github.com/lynchjames/obsidian-day-planner/blob/main/src/status-bar.ts
 */
 
+.statusbar-pomo-logging:hover {
+    cursor: pointer;
+}
+
+
+
+
 .statusbar-pomo-progress-bar {
     margin-top: 2px;
     background-color: var(--text-muted);
