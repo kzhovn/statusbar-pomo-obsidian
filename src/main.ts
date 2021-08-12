@@ -39,6 +39,7 @@ export default class PomoTimerPlugin extends Plugin {
 
 		addIcon("feather-play", feather.icons.play.toString());
 		addIcon("feather-pause", feather.icons.pause.toString());
+		addIcon("feather-quit", feather.icons.x.toSvg({viewBox: "0 0 24 24", width: "100", height: "100"}).toString()); //https://github.com/phibr0/obsidian-customizable-sidebar/blob/master/src/ui/icons.ts
 
 		this.addCommand({
 			id: 'start-satusbar-pomo',
@@ -47,7 +48,7 @@ export default class PomoTimerPlugin extends Plugin {
 			checkCallback: (checking: boolean) => {
 				let leaf = this.app.workspace.activeLeaf;
 				if (leaf) {
-					if (!checking) { //start pomo
+					if (!checking) {
 						this.timer.startTimer(Mode.Pomo);
 					}
 					return true;
@@ -75,7 +76,7 @@ export default class PomoTimerPlugin extends Plugin {
 		this.addCommand({
 			id: 'quit-satusbar-pomo',
 			name: 'Quit timer',
-			//icon: 'feather-quit', //for some reason fefuding to set quit and only quit icon
+			icon: 'feather-quit', //for some reason refusing to set quit and only quit icon
 			checkCallback: (checking: boolean) => {
 				let leaf = this.app.workspace.activeLeaf;
 				if (leaf && this.timer.mode !== Mode.NoTimer) {
