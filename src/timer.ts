@@ -37,9 +37,8 @@ export class Timer {
 		this.pomosSinceStart = 0;
 		this.cyclesSinceLastAutoStop = 0;
 
-		if (this.settings.whiteNoise === true) {
-			this.whiteNoisePlayer = new WhiteNoise(plugin, whiteNoiseUrl);
-		}
+		// initialize white noise player even if it it started as false so that it can be toggled.
+		this.whiteNoisePlayer = new WhiteNoise(plugin, whiteNoiseUrl);
 	}
 
 	async onRibbonIconClick() {

@@ -40,6 +40,7 @@ export default class PomoTimerPlugin extends Plugin {
 		addIcon("feather-play", feather.icons.play.toString());
 		addIcon("feather-pause", feather.icons.pause.toString());
 		addIcon("feather-quit", feather.icons.x.toSvg({viewBox: "0 0 24 24", width: "100", height: "100"}).toString()); //https://github.com/phibr0/obsidian-customizable-sidebar/blob/master/src/ui/icons.ts
+		addIcon("feather-headphones", feather.icons.headphones.toString());
 
 		this.addCommand({
 			id: 'start-satusbar-pomo',
@@ -92,7 +93,7 @@ export default class PomoTimerPlugin extends Plugin {
 		this.addCommand({
 			id: 'toggle-white-noise',
 			name: 'Toggle White noise',
-			icon: 'feather-play',
+			icon: 'feather-headphones',
 			checkCallback: (checking: boolean) => {
 				let leaf = this.app.workspace.activeLeaf;
 				if (leaf && this.timer.mode === Mode.Pomo) {
