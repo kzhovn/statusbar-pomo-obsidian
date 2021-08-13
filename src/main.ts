@@ -81,7 +81,7 @@ export default class PomoTimerPlugin extends Plugin {
 				let leaf = this.app.workspace.activeLeaf;
 				if (leaf) {
 					if (!checking) {
-						this.timer.startTimer(Mode.ShortBreak);
+						this.timer.startTimer(Mode.LongBreak);
 					}
 					return true;
 				}
