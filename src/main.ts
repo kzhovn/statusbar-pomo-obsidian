@@ -88,6 +88,28 @@ export default class PomoTimerPlugin extends Plugin {
 				return false;
 			}
 		});
+
+		this.addCommand({
+			id: 'toggle-white-noise',
+			name: 'Toggle White noise',
+			icon: 'feather-play',
+			checkCallback: (checking: boolean) => {
+				let leaf = this.app.workspace.activeLeaf;
+				if (leaf && this.timer.mode === Mode.Pomo) {
+					if (!checking) {
+						if(this.settings.whiteNoise) {
+							this.settings.whiteNoise = false;
+							this.timer.whiteNoisePlayer.stopWhiteNoise();
+						} else {
+							this.settings.whiteNoise = true;
+							this.timer.whiteNoisePlayer.whiteNoise();
+						}
+					}
+					return true;
+				}
+				return false;
+			}
+		});
 	}
 
 
