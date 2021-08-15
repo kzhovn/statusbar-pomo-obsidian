@@ -9,7 +9,7 @@ import PomoTimerPlugin from './main';
 
 const MILLISECS_IN_MINUTE = 60 * 1000;
 
-export enum Mode {
+export const enum Mode {
 	Pomo,
 	ShortBreak,
 	LongBreak,
@@ -115,7 +115,7 @@ export class Timer {
 	}
 
 	async restartTimer(): Promise<void> {
-		this.setStartEndTime(this.pausedTime);
+		this.setStartAndEndTime(this.pausedTime);
 		await this.modeRestartingNotification();
 		this.paused = false;
 
@@ -126,6 +126,7 @@ export class Timer {
 
 	async startTimer(mode: Mode): Promise<void> {
 		this.mode = mode;
+		this.paused = false;
 
 		if (this.settings.logActiveNote === true) {
 			const activeView = this.plugin.app.workspace.getActiveFile();
@@ -134,7 +135,7 @@ export class Timer {
 			}
 		}
 
-		this.setStartEndTime(this.getTotalModeMillisecs());
+		this.setStartAndEndTime(this.getTotalModeMillisecs());
 		await this.modeStartingNotification();
 
 		if (this.settings.whiteNoise === true) {
@@ -142,7 +143,7 @@ export class Timer {
 		}
 	}
 
-	setStartEndTime(millisecsLeft: number): void {
+	setStartAndEndTime(millisecsLeft: number): void {
 		this.startTime = moment(); //start time to current time
 		this.endTime = moment().add(millisecsLeft, 'milliseconds');
 	}
