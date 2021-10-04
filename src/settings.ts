@@ -1,4 +1,4 @@
-import { App, DropdownComponent, Notice, PluginSettingTab, Setting } from 'obsidian';
+import { App, Notice, PluginSettingTab, Setting } from 'obsidian';
 import { appHasDailyNotesPluginLoaded } from 'obsidian-daily-notes-interface';
 import { whiteNoiseUrl } from './audio_urls';
 import PomoTimerPlugin from './main';
@@ -10,7 +10,6 @@ export interface PomoSettings {
 	longBreak: number;
 	longBreakInterval: number;
 	autostartTimer: boolean;
-	endTimerBehavior: EndTimerBehavior;
 	numAutoCycles: number;
 	ribbonIcon: boolean;
 	notificationSound: boolean;
@@ -30,7 +29,6 @@ export const DEFAULT_SETTINGS: PomoSettings = {
 	longBreak: 15,
 	longBreakInterval: 4,
 	autostartTimer: true,
-	endTimerBehavior: EndTimerBehavior.Continue,
 	numAutoCycles: 0,
 	ribbonIcon: true,
 	notificationSound: true,
@@ -42,12 +40,6 @@ export const DEFAULT_SETTINGS: PomoSettings = {
 	logActiveNote: false,
 	fancyStatusBar: false,
 	whiteNoise: false,
-}
-
-export const enum EndTimerBehavior {
-	Continue,
-	Pause,
-	Negative
 }
 
 export class PomoSettingTab extends PluginSettingTab {
@@ -117,29 +109,20 @@ export class PomoSettingTab extends PluginSettingTab {
 					}));
 
 		new Setting(containerEl)
-			.setName('Timer end behavior')
-			.setDesc('Default is to continue to the next timer, can also pause or continue counting down in the negatives until manually paused')
-			.addDropdown(drop => {
-					drop.addOption("continue", "Continue to next timer");
-					drop.addOption("pause", "Pause timer");
-					drop.addOption("negative", "Run negative timer until paused");
-					drop.onChange(value => {
-						if (value === "continue") {
-							this.plugin.settings.endTimerBehavior = EndTimerBehavior.Continue;
-						} else if (value === "pause") {
-							this.plugin.settings.endTimerBehavior = EndTimerBehavior.Pause;
-						} else if (value === "negative") {
-							this.plugin.settings.endTimerBehavior = EndTimerBehavior.Negative;
-						}
-						drop.setValue(value); //not setting -> saves
+			.setName('Autostart timer')
+			.setDesc('Start each pomodoro and break automatically. When off, click the sidebar icon on the left or use the toggle pause command to start the next timer')
+			.addToggle(toggle => toggle
+					.setValue(this.plugin.settings.autostartTimer)
+					.onChange(value => {
+						this.plugin.settings.autostartTimer = value;
 						this.plugin.saveSettings();
 						this.display() //force refresh
-					})});
+					}));
 
-		if (this.plugin.settings.endTimerBehavior !== EndTimerBehavior.Continue) { //if setting the number of cycles does something
+		if (this.plugin.settings.autostartTimer === false) {
 			new Setting(containerEl)
 				.setName('Cycles before pause')
-				.setDesc('Number of pomodoro + break cycles to run automatically before end timer behavior kicks in. Default is 0 (after every pomodoro and every break). Set to 1 to stop after every pomo/break pair')
+				.setDesc('Number of pomodoro + break cycles to run automatically before stopping. Default is 0 (stops after every pomodoro and every break)')
 				.addText(text => text
 					.setValue(this.plugin.settings.numAutoCycles.toString())
 					.onChange(value => {

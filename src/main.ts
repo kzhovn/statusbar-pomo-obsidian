@@ -1,6 +1,6 @@
 import { addIcon, Plugin } from 'obsidian';
 import * as feather from 'feather-icons'; //import just icons I want?
-import { PomoSettingTab, PomoSettings, DEFAULT_SETTINGS, EndTimerBehavior } from './settings';
+import { PomoSettingTab, PomoSettings, DEFAULT_SETTINGS } from './settings';
 import { getDailyNoteFile, Mode, Timer } from './timer';
 
 
@@ -19,11 +19,6 @@ export default class PomoTimerPlugin extends Plugin {
 		this.statusBar.addClass("statusbar-pomo");
 		if (this.settings.logging === true) {
 			this.openLogFileOnClick();
-		}
-
-		//Update settings for anyone who set the old autostart; delete this later
-		if (this.settings.autostartTimer === false) {
-			this.settings.endTimerBehavior = EndTimerBehavior.Pause;
 		}
 
 		this.timer = new Timer(this);
@@ -81,7 +76,7 @@ export default class PomoTimerPlugin extends Plugin {
 		this.addCommand({
 			id: 'quit-satusbar-pomo',
 			name: 'Quit timer',
-			icon: 'feather-quit',
+			icon: 'feather-quit', //for some reason refusing to set quit and only quit icon
 			checkCallback: (checking: boolean) => {
 				let leaf = this.app.workspace.activeLeaf;
 				if (leaf && this.timer.mode !== Mode.NoTimer) {
