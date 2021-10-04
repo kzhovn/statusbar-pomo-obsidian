@@ -42,6 +42,7 @@ export const DEFAULT_SETTINGS: PomoSettings = {
 	whiteNoise: false,
 }
 
+
 export class PomoSettingTab extends PluginSettingTab {
 	plugin: PomoTimerPlugin;
 
@@ -59,38 +60,38 @@ export class PomoSettingTab extends PluginSettingTab {
 		/**************  Timer settings **************/
 
 		new Setting(containerEl)
-			.setName('Pomodoro time (minutes)')
-			.setDesc('Leave blank for default')
+			.setName("Pomodoro time (minutes)")
+			.setDesc("Leave blank for default")
 			.addText(text => text
 				.setValue(this.plugin.settings.pomo.toString())
 				.onChange(value => {
-					this.plugin.settings.pomo = setNumericValue(value, DEFAULT_SETTINGS.pomo, this.plugin.settings.pomo);;
+					this.plugin.settings.pomo = setNumericValue(value, DEFAULT_SETTINGS.pomo, this.plugin.settings.pomo);
 					this.plugin.saveSettings();
 				}));
 
 		new Setting(containerEl)
-			.setName('Short break time (minutes)')
-			.setDesc('Leave blank for default')
+			.setName("Short break time (minutes)")
+			.setDesc("Leave blank for default")
 			.addText(text => text
 				.setValue(this.plugin.settings.shortBreak.toString())
 				.onChange(value => {
-					this.plugin.settings.shortBreak = setNumericValue(value, DEFAULT_SETTINGS.shortBreak, this.plugin.settings.shortBreak);;
+					this.plugin.settings.shortBreak = setNumericValue(value, DEFAULT_SETTINGS.shortBreak, this.plugin.settings.shortBreak);
 					this.plugin.saveSettings();
 				}));
 
 		new Setting(containerEl)
-			.setName('Long break time (minutes)')
-			.setDesc('Leave blank for default')
+			.setName("Long break time (minutes)")
+			.setDesc("Leave blank for default")
 			.addText(text => text
 				.setValue(this.plugin.settings.longBreak.toString())
 				.onChange(value => {
-					this.plugin.settings.longBreak = setNumericValue(value, DEFAULT_SETTINGS.longBreak, this.plugin.settings.longBreak);;
+					this.plugin.settings.longBreak = setNumericValue(value, DEFAULT_SETTINGS.longBreak, this.plugin.settings.longBreak);
 					this.plugin.saveSettings();
 				}));
 
 		new Setting(containerEl)
-			.setName('Long break interval')
-			.setDesc('Number of pomos before a long break; leave blank for default')
+			.setName("Long break interval")
+			.setDesc("Number of pomos before a long break; leave blank for default")
 			.addText(text => text
 				.setValue(this.plugin.settings.longBreakInterval.toString())
 				.onChange(value => {
@@ -99,8 +100,8 @@ export class PomoSettingTab extends PluginSettingTab {
 				}));
 
 		new Setting(containerEl)
-			.setName('Sidebar icon')
-			.setDesc('Toggle left sidebar icon. Restart Obsidian for the change to take effect')
+			.setName("Sidebar icon")
+			.setDesc("Toggle left sidebar icon. Restart Obsidian for the change to take effect")
 			.addToggle(toggle => toggle
 					.setValue(this.plugin.settings.ribbonIcon)
 					.onChange(value => {
@@ -109,8 +110,8 @@ export class PomoSettingTab extends PluginSettingTab {
 					}));
 
 		new Setting(containerEl)
-			.setName('Autostart timer')
-			.setDesc('Start each pomodoro and break automatically. When off, click the sidebar icon on the left or use the toggle pause command to start the next timer')
+			.setName("Autostart timer")
+			.setDesc("Start each pomodoro and break automatically. When off, click the sidebar icon on the left or use the toggle pause command to start the next timer")
 			.addToggle(toggle => toggle
 					.setValue(this.plugin.settings.autostartTimer)
 					.onChange(value => {
@@ -121,8 +122,8 @@ export class PomoSettingTab extends PluginSettingTab {
 
 		if (this.plugin.settings.autostartTimer === false) {
 			new Setting(containerEl)
-				.setName('Cycles before pause')
-				.setDesc('Number of pomodoro + break cycles to run automatically before stopping. Default is 0 (stops after every pomodoro and every break)')
+				.setName("Cycles before pause")
+				.setDesc("Number of pomodoro + break cycles to run automatically before stopping. Default is 0 (stops after every pomodoro and every break)")
 				.addText(text => text
 					.setValue(this.plugin.settings.numAutoCycles.toString())
 					.onChange(value => {
@@ -138,8 +139,8 @@ export class PomoSettingTab extends PluginSettingTab {
 		/**************  Sound settings **************/
 			
 		new Setting(containerEl)
-			.setName('Notification sound')
-			.setDesc('Play notification sound at the end of each pomodoro and break')
+			.setName("Notification sound")
+			.setDesc("Play notification sound at the end of each pomodoro and break")
 			.addToggle(toggle => toggle
 					.setValue(this.plugin.settings.notificationSound)
 					.onChange(value => {
@@ -148,8 +149,8 @@ export class PomoSettingTab extends PluginSettingTab {
 					}));
 
 		new Setting(containerEl)
-			.setName('White noise')
-			.setDesc('Play white noise while timer is active')
+			.setName("White noise")
+			.setDesc("Play white noise while timer is active")
 			.addToggle(toggle => toggle
 					.setValue(this.plugin.settings.whiteNoise)
 					.onChange(value => {
@@ -158,7 +159,7 @@ export class PomoSettingTab extends PluginSettingTab {
 
 						if (this.plugin.settings.whiteNoise === true) {
 							this.plugin.timer.whiteNoisePlayer = new WhiteNoise(this.plugin, whiteNoiseUrl);
-							this.plugin.timer.whiteNoisePlayer.whiteNoise()
+							this.plugin.timer.whiteNoisePlayer.whiteNoise();
 						} else { //if false, turn it off immediately
 							this.plugin.timer.whiteNoisePlayer.stopWhiteNoise();
 						}
@@ -170,17 +171,17 @@ export class PomoSettingTab extends PluginSettingTab {
 		/**************  Logging settings **************/
 
 		new Setting(containerEl)
-			.setName('Logging')
-			.setDesc('Enable a log of completed pomodoros')
+			.setName("Logging")
+			.setDesc("Enable a log of completed pomodoros")
 			.addToggle(toggle => toggle
 					.setValue(this.plugin.settings.logging)
-					.onChange(async value => {
+					.onChange(value => {
 						this.plugin.settings.logging = value;
 
 						if (value === true) {
 							this.plugin.openLogFileOnClick();
 						} else {
-							this.plugin.statusBar.removeClass("statusbar-pomo-logging")
+							this.plugin.statusBar.removeClass("statusbar-pomo-logging");
 						}
 
 						this.plugin.saveSettings();
@@ -191,8 +192,8 @@ export class PomoSettingTab extends PluginSettingTab {
 		if (this.plugin.settings.logging === true) {
 
 			new Setting(containerEl)
-				.setName('Log file')
-				.setDesc(`If file doesn't already exist, it will be created`)
+				.setName("Log file")
+				.setDesc("If file doesn't already exist, it will be created")
 				.addText(text => text
 					.setValue(this.plugin.settings.logFile.toString())
 					.onChange(value => {
@@ -201,8 +202,8 @@ export class PomoSettingTab extends PluginSettingTab {
 					}));
 
 			new Setting(containerEl)
-				.setName('Log to daily note')
-				.setDesc(`Logs to the end of today's daily note`)
+				.setName("Log to daily note")
+				.setDesc("Logs to the end of today's daily note")
 				.addToggle(toggle => toggle
 					.setValue(this.plugin.settings.logToDaily)
 					.onChange(value => {
@@ -218,8 +219,8 @@ export class PomoSettingTab extends PluginSettingTab {
 	
 
 			new Setting(containerEl)
-				.setName('Timestamp Format')
-				.setDesc('Specify format for the logtext using moment syntax')
+				.setName("Timestamp Format")
+				.setDesc("Specify format for the logtext using moment syntax")
 				.addMomentFormat(text => text
 					.setDefaultFormat(this.plugin.settings.logText)
 					.onChange(value => {
@@ -228,8 +229,8 @@ export class PomoSettingTab extends PluginSettingTab {
 					}));
 
 			new Setting(containerEl)
-			.setName('Log active note')
-			.setDesc('In log, append wikilink pointing to the note that was active when you started the pomodoro')
+			.setName("Log active note")
+			.setDesc("In log, append link pointing to the note that was active when you started the pomodoro")
 			.addToggle(toggle => toggle
 					.setValue(this.plugin.settings.logActiveNote)
 					.onChange(value => {
@@ -241,13 +242,13 @@ export class PomoSettingTab extends PluginSettingTab {
 }
 
 //sets the setting for the given to value if it's a valid, default if empty, otherwise sends user error notice
-function setNumericValue(value: string, default_setting: number, current_setting: number){
+function setNumericValue(value: string, defaultSetting: number, currentSetting: number){
 	if (value === '') { //empty string -> reset to default
-		return default_setting;
+		return defaultSetting;
 	} else if (!isNaN(Number(value)) && (Number(value) > 0)) { //if positive number, set setting
 		return Number(value);
 	} else { //invalid input
-		new Notice('Please specify a valid number.');
-		return current_setting;
+		new Notice("Please specify a valid number.");
+		return currentSetting;
 	}
 }
