@@ -74,6 +74,23 @@ export default class PomoTimerPlugin extends Plugin {
 		});
 
 		this.addCommand({
+			id: 'log-and-quit-satusbar-pomo',
+			name: 'Log Pomodoro Time and Quit.',
+			icon: 'feather-log-and-quit',
+			checkCallback: (checking: boolean) => {
+				let leaf = this.app.workspace.activeLeaf;
+				if (leaf && this.timer.mode !== Mode.NoTimer) {
+					if (!checking) {
+						this.timer.stopTimerEarly();
+						this.timer.quitTimer();
+					}
+					return true;
+				}
+				return false;
+			}
+		});
+
+		this.addCommand({
 			id: 'quit-satusbar-pomo',
 			name: 'Quit timer',
 			icon: 'feather-quit',
