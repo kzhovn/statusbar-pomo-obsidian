@@ -68,6 +68,12 @@ export class Timer {
 		}
 	}
 
+	 stopTimerEarly() {
+		if (this.settings.logging === true) {
+			this.logPomo();
+	   }
+	}
+
 	async handleTimerEnd() {
 		if (this.mode === Mode.Pomo) { //completed another pomo
 			this.pomosSinceStart += 1;
