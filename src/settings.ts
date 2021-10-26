@@ -21,6 +21,7 @@ export interface PomoSettings {
 	logActiveNote: boolean;
 	fancyStatusBar: boolean;
 	whiteNoise: boolean;
+	showActiveNoteInTimer: boolean;
 }
 
 export const DEFAULT_SETTINGS: PomoSettings = {
@@ -40,6 +41,7 @@ export const DEFAULT_SETTINGS: PomoSettings = {
 	logActiveNote: false,
 	fancyStatusBar: false,
 	whiteNoise: false,
+	showActiveNoteInTimer: false,
 }
 
 
@@ -237,6 +239,16 @@ export class PomoSettingTab extends PluginSettingTab {
 						this.plugin.settings.logActiveNote = value;
 						this.plugin.saveSettings();
 					}));
+
+			new Setting(containerEl)
+			.setName("Show active note in status bar")
+			.setDesc("In the status bar, show active note that pomodor was started in.")
+			.addToggle(toggle => toggle
+					.setValue(this.plugin.settings.showActiveNoteInTimer)
+					.onChange(value => {
+						this.plugin.settings.showActiveNoteInTimer = value;
+						this.plugin.saveSettings();
+					}));					
 		}
 	}
 }

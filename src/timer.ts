@@ -55,7 +55,7 @@ export class Timer {
 	async setStatusBarText(): Promise<string> {
 		if (this.mode !== Mode.NoTimer) {
 			if (this.paused === true) {
-				return millisecsToString(this.pausedTime); //just show the paused time
+				return this.activeNote && this.plugin.settings.logActiveNote && this.plugin.settings.showActiveNoteInTimer ? '( ' + this.activeNote.basename + ' ) ' + millisecsToString(this.pausedTime) : millisecsToString(this.pausedTime); //just show the paused time
 			}
 
 			/*if reaching the end of the current timer, end of current timer*/
@@ -63,7 +63,7 @@ export class Timer {
 				await this.handleTimerEnd();
 			}
 
-			return millisecsToString(this.getCountdown()); //return display value
+			return this.activeNote && this.plugin.settings.logActiveNote && this.plugin.settings.showActiveNoteInTimer ? '( ' + this.activeNote.basename + ' ) ' + millisecsToString(this.getCountdown()) : millisecsToString(this.getCountdown()); //return display value
 		} else {
 			return ""; //fixes TypeError: failed to execute 'appendChild' on 'Node https://github.com/kzhovn/statusbar-pomo-obsidian/issues/4
 		}
@@ -208,12 +208,12 @@ export class Timer {
 
 		switch (this.mode) {
 			case (Mode.Pomo): {
-				new Notice(`Starting ${time} ${unit} pomodoro.`);
+				new Notice(`Starting ${time} ${unit} pomodoro. \n` + (this.settings.logActiveNote && this.activeNote ? `(` + this.activeNote.basename + `)`: ``));
 				break;
 			}
 			case (Mode.ShortBreak):
 			case (Mode.LongBreak): {
-				new Notice(`Starting ${time} ${unit} break.`);
+				new Notice(`Starting ${time} ${unit} break.` + `carlo`);
 				break;
 			}
 			case (Mode.NoTimer): {
