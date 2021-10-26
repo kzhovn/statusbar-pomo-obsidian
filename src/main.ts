@@ -20,9 +20,7 @@ export default class PomoTimerPlugin extends Plugin {
 		if (this.settings.logging === true) {
 			this.openLogFileOnClick();
 		}
-
 		this.timer = new Timer(this);
-
 		/*Adds icon to the left side bar which starts the pomo timer when clicked
 		  if no timer is currently running, and otherwise quits current timer*/
 		if (this.settings.ribbonIcon === true) {
@@ -51,7 +49,27 @@ export default class PomoTimerPlugin extends Plugin {
 				if (leaf) {
 					if (!checking) {
 						this.timer.plugin.loadSettings();
+						this.timer.triggered = false;
 						this.timer.startTimer(Mode.Pomo);
+					}
+					return true;
+				}
+				return false;
+			}
+		});
+
+		this.addCommand({
+			id: 'log-and-quit-satusbar-pomo',
+			name: 'Log Pomodoro Time and Quit.',
+			icon: 'feather-log-and-quit',
+			checkCallback: (checking: boolean) => {
+				let leaf = this.app.workspace.activeLeaf;
+				if (leaf && this.timer.mode !== Mode.NoTimer) {
+					if (!checking) {
+						this.timer.extendPomodoroTime = false;
+						this.timer.triggered = false;
+						this.timer.stopTimerEarly();
+						this.timer.quitTimer();
 					}
 					return true;
 				}
@@ -100,23 +118,6 @@ export default class PomoTimerPlugin extends Plugin {
 				if (leaf && this.timer.mode !== Mode.NoTimer) {
 					if (!checking) {
 						this.timer.togglePause();
-					}
-					return true;
-				}
-				return false;
-			}
-		});
-
-		this.addCommand({
-			id: 'log-and-quit-satusbar-pomo',
-			name: 'Log Pomodoro Time and Quit.',
-			icon: 'feather-log-and-quit',
-			checkCallback: (checking: boolean) => {
-				let leaf = this.app.workspace.activeLeaf;
-				if (leaf && this.timer.mode !== Mode.NoTimer) {
-					if (!checking) {
-						this.timer.stopTimerEarly();
-						this.timer.quitTimer();
 					}
 					return true;
 				}

@@ -5,6 +5,8 @@ import { notificationUrl, whiteNoiseUrl } from './audio_urls';
 import { WhiteNoise } from './white_noise';
 import { PomoSettings } from './settings';
 import PomoTimerPlugin from './main';
+import {confirmWithModal} from "./extend_modal";
+
 
 const MILLISECS_IN_MINUTE = 60 * 1000;
 
@@ -19,6 +21,7 @@ export const enum Mode {
 export class Timer {
 	plugin: PomoTimerPlugin;
 	settings: PomoSettings;
+	originalStartTime: Moment;
 	startTime: Moment; /*when currently running timer started*/
 	endTime: Moment;   /*when currently running timer will end if not paused*/
 	mode: Mode;
@@ -28,6 +31,9 @@ export class Timer {
 	cyclesSinceLastAutoStop: number;
 	activeNote: TFile;
 	whiteNoisePlayer: WhiteNoise;
+	extendPomodoroTime: boolean;
+	triggered: boolean;
+	extendedTime: Moment;
 
 	constructor(plugin: PomoTimerPlugin) {
 		this.plugin = plugin;
@@ -36,6 +42,8 @@ export class Timer {
 		this.paused = false;
 		this.pomosSinceStart = 0;
 		this.cyclesSinceLastAutoStop = 0;
+		this.extendPomodoroTime = false;
+		this.triggered = false;
 
 		// initialize white noise player even if it it started as false so that it can be toggled.
 		this.whiteNoisePlayer = new WhiteNoise(plugin, whiteNoiseUrl);
@@ -53,16 +61,24 @@ export class Timer {
 	//handling switching logic here, should spin out
 	async setStatusBarText(): Promise<string> {
 		if (this.mode !== Mode.NoTimer) {
-			if (this.paused === true) {
-				return this.activeNote && this.plugin.settings.logActiveNote && this.plugin.settings.showActiveNoteInTimer ? '( ' + this.activeNote.basename + ' ) ' + millisecsToString(this.pausedTime) : millisecsToString(this.pausedTime); //just show the paused time
+			if(this.extendPomodoroTime === false) {
+				if (this.paused === true) {
+					return this.activeNote && this.plugin.settings.logActiveNote && this.plugin.settings.showActiveNoteInTimer ? '( ' + this.activeNote.basename + ' ) ' + millisecsToString(this.pausedTime) : millisecsToString(this.pausedTime); //just show the paused time
+				}
+				/*if reaching the end of the current timer, end of current timer*/
+				else if (moment().isSameOrAfter(this.endTime)) {
+					if(!this.triggered) {
+						await this.handleTimerEnd();
+					}
+				}
+				return this.activeNote && this.plugin.settings.logActiveNote && this.plugin.settings.showActiveNoteInTimer ? '( ' + this.activeNote.basename + ' ) ' + millisecsToString(this.getCountdown()) : millisecsToString(this.getCountdown()); //return display value
+			} else {
+				if (this.paused === true) {
+					return this.activeNote && this.plugin.settings.logActiveNote && this.plugin.settings.showActiveNoteInTimer ? '( ' + this.activeNote.basename + ' ) ' + millisecsToString(this.pausedTime) : millisecsToString(this.pausedTime); //just show the paused time
+				}
+				return this.activeNote && this.plugin.settings.logActiveNote && this.plugin.settings.showActiveNoteInTimer ? '( ' + this.activeNote.basename + ' ) ' + millisecsToString(this.getStopwatch()) : millisecsToString(this.getStopwatch()); //return display value
 			}
 
-			/*if reaching the end of the current timer, end of current timer*/
-			else if (moment().isSameOrAfter(this.endTime)) {
-				await this.handleTimerEnd();
-			}
-
-			return this.activeNote && this.plugin.settings.logActiveNote && this.plugin.settings.showActiveNoteInTimer ? '( ' + this.activeNote.basename + ' ) ' + millisecsToString(this.getCountdown()) : millisecsToString(this.getCountdown()); //return display value
 		} else {
 			return ""; //fixes TypeError: failed to execute 'appendChild' on 'Node https://github.com/kzhovn/statusbar-pomo-obsidian/issues/4
 		}
@@ -75,35 +91,48 @@ export class Timer {
 	}
 
 	async handleTimerEnd() {
-		if (this.mode === Mode.Pomo) { //completed another pomo
-			this.pomosSinceStart += 1;
+		this.triggered = true;
+		this.pauseTimer();
+		if(this.settings.allowExtendedPomodoro) {
+			await confirmWithModal(this.plugin.app, "Do You Want To Extend Your Pomodoro Session ? ", this.plugin)
+		} else {
+			this.extendPomodoroTime = false;
+		}
+		if(this.extendPomodoroTime) {
+			this.restartTimer();
+			this.extendedTime = moment();
+		} else {
+			if (this.mode === Mode.Pomo) { //completed another pomo
+				this.pomosSinceStart += 1;
 
-			if (this.settings.logging === true) {
-				await this.logPomo();
+				if (this.settings.logging === true) {
+					await this.logPomo();
+				}
+			} else if (this.mode === Mode.ShortBreak || this.mode === Mode.LongBreak) {
+				this.cyclesSinceLastAutoStop += 1;
 			}
-		} else if (this.mode === Mode.ShortBreak || this.mode === Mode.LongBreak) {
-			this.cyclesSinceLastAutoStop += 1;
-		}
-		
-		//switch mode
-		if (this.settings.notificationSound === true) { //play sound end of timer
-			playNotification();
-		}
 
-		if (this.mode === Mode.Pomo) {
-			if (this.pomosSinceStart % this.settings.longBreakInterval === 0) {
-				this.startTimer(Mode.LongBreak);
-			} else {
-				this.startTimer(Mode.ShortBreak);
+			//switch mode
+			if (this.settings.notificationSound === true) { //play sound end of timer
+				playNotification();
 			}
-		} else { //short break. long break, or no timer
-			this.startTimer(Mode.Pomo);
+
+			if (this.mode === Mode.Pomo) {
+				if (this.pomosSinceStart % this.settings.longBreakInterval === 0) {
+					this.startTimer(Mode.LongBreak);
+				} else {
+					this.startTimer(Mode.ShortBreak);
+				}
+			} else { //short break. long break, or no timer
+				this.startTimer(Mode.Pomo);
+			}
+
+			if (this.settings.autostartTimer === false && this.settings.numAutoCycles <= this.cyclesSinceLastAutoStop) { //if autostart disabled, pause and allow user to start manually
+				this.pauseTimer();
+				this.cyclesSinceLastAutoStop = 0;
+			}
 		}
 
-		if (this.settings.autostartTimer === false && this.settings.numAutoCycles <= this.cyclesSinceLastAutoStop) { //if autostart disabled, pause and allow user to start manually
-			this.pauseTimer();
-			this.cyclesSinceLastAutoStop = 0;
-		}
 	}
 
 	async quitTimer(): Promise<void> {
@@ -142,7 +171,6 @@ export class Timer {
 		this.setStartAndEndTime(this.pausedTime);
 		this.modeRestartingNotification();
 		this.paused = false;
-
 		if (this.settings.whiteNoise === true) {
 			this.whiteNoisePlayer.whiteNoise();
 		}
@@ -160,6 +188,7 @@ export class Timer {
 		}
 
 		this.setStartAndEndTime(this.getTotalModeMillisecs());
+		this.originalStartTime = moment();
 		this.modeStartingNotification();
 
 		if (this.settings.whiteNoise === true) {
@@ -176,6 +205,11 @@ export class Timer {
 	getCountdown(): number {
 		let endTimeClone = this.endTime.clone(); //rewrite with freeze?
 		return endTimeClone.diff(moment());
+	}
+
+	getStopwatch(): number {
+		let startTimeClone = this.extendedTime.clone(); //rewrite with freeze?
+		return moment().diff(startTimeClone);
 	}
 
 	getTotalModeMillisecs(): number {
@@ -242,14 +276,15 @@ export class Timer {
 		}
 	}
 
-
-
 	/**************  Logging  **************/
 	async logPomo(): Promise<void> {
 		var logText = moment().format(this.settings.logText);
 
 		if (this.settings.logActiveNote === true) { //append link to note that was active when pomo started
 			logText = logText + " " + this.plugin.app.fileManager.generateMarkdownLink(this.activeNote, '');
+			if(this.settings.logPomodoroDuration === true) {
+				logText = logText + ' ' + Math.floor(moment.duration(moment().diff(this.originalStartTime)).asMinutes()) + ' minute/s. ';
+			}
 		}
 
 		if (this.settings.logToDaily === true) { //use today's note

@@ -19,9 +19,11 @@ export interface PomoSettings {
 	logText: string;
 	logToDaily: boolean;
 	logActiveNote: boolean;
+	logPomodoroDuration: boolean;
 	fancyStatusBar: boolean;
 	whiteNoise: boolean;
 	showActiveNoteInTimer: boolean;
+	allowExtendedPomodoro: boolean;
 }
 
 export const DEFAULT_SETTINGS: PomoSettings = {
@@ -39,9 +41,11 @@ export const DEFAULT_SETTINGS: PomoSettings = {
 	logToDaily: false,
 	logText: "[🍅] dddd, MMMM DD YYYY, h:mm A",
 	logActiveNote: false,
+	logPomodoroDuration: false,
 	fancyStatusBar: false,
 	whiteNoise: false,
 	showActiveNoteInTimer: false,
+	allowExtendedPomodoro: false,
 }
 
 
@@ -241,6 +245,16 @@ export class PomoSettingTab extends PluginSettingTab {
 					}));
 
 			new Setting(containerEl)
+				.setName("Log pomodoro duration")
+				.setDesc("Log pomodoro duration in minutes in your active log file.")
+				.addToggle(toggle => toggle
+					.setValue(this.plugin.settings.logPomodoroDuration)
+					.onChange(value => {
+						this.plugin.settings.logPomodoroDuration = value;
+						this.plugin.saveSettings();
+					}));
+
+			new Setting(containerEl)
 			.setName("Show active note in status bar")
 			.setDesc("In the status bar, show active note that pomodor was started in.")
 			.addToggle(toggle => toggle
@@ -248,7 +262,16 @@ export class PomoSettingTab extends PluginSettingTab {
 					.onChange(value => {
 						this.plugin.settings.showActiveNoteInTimer = value;
 						this.plugin.saveSettings();
-					}));					
+					}));
+			new Setting(containerEl)
+				.setName("Allow extended Pomodoro")
+				.setDesc("Allow Extended Pomodoro")
+				.addToggle(toggle => toggle
+					.setValue(this.plugin.settings.allowExtendedPomodoro)
+					.onChange(value => {
+						this.plugin.settings.allowExtendedPomodoro = value;
+						this.plugin.saveSettings();
+					}));
 		}
 	}
 }
