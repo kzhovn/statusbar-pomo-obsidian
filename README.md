@@ -24,3 +24,51 @@ If you enable logging, the plugin will write to the file you specify as your log
 "Log active note" will include a link to the active note at the time the pomodoro timer started in the log message.
 
 You can open the current log file by clicking the timer.
+
+## Flexible Pomodoro Features
+
+### Early Logging and Quitting
+
+For tasks that were finished much earlier, the tool provides additional commands for logging and quitting. Once triggered, the application will already log the Pomodoro and stop the timer.
+For this to work, Pomodoro logging should be turned on in options.
+
+![log_pomodoro_time](logpomodorotime.GIF)
+
+### Show Active Note In Status Bar
+
+When this option is turned on the active note will be shown in the pomodoro timer.
+
+![img.png](img.png)
+
+![img_1.png](img_1.png)
+
+For this to work, options should enable 
+
+### Extended Pomodoro
+
+For Pomodoro users that want to work outside of the pomodoro time limit, this option provides a flexible option to extend your Pomodoro.
+If you choose to extend, a stop watch will start to log the pomodoro. If you choose not to extend, the next break will start already.
+
+![extended_pomdoro.gif](extendedpomodoro.GIF)
+
+Please use Log Pomodoro Time and Quit so that extended pomodoros are logged and recorded.
+
+![ending_extended_pomodoro.gif](ending_extended_pomodoro.GIF)
+
+### Log Pomodoro Duration
+
+Added an option so that pomodoro duration is logged.
+
+![img_3.png](img_3.png)
+
+### Additional Commands
+
+#### Start Short Break
+
+Starts a short break manually.
+
+#### Start Long Break
+
+Starts a long break manually.
+
+![img_2.png](img_2.png)
