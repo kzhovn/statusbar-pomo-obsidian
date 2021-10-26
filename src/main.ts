@@ -48,7 +48,7 @@ export default class PomoTimerPlugin extends Plugin {
 				let leaf = this.app.workspace.activeLeaf;
 				if (leaf) {
 					if (!checking) {
-						this.timer.plugin.loadSettings();
+						this.timer = new Timer(this);
 						this.timer.triggered = false;
 						this.timer.startTimer(Mode.Pomo);
 					}
