@@ -27,7 +27,7 @@ export default class PomoTimerPlugin extends Plugin {
 		  if no timer is currently running, and otherwise quits current timer*/
 		if (this.settings.ribbonIcon === true) {
 			this.addRibbonIcon('clock', 'Start pomodoro', async () => {
-				await this.timer.onRibbonIconClick();
+				this.timer.onRibbonIconClick();
 			});
 		}
 
@@ -109,7 +109,7 @@ export default class PomoTimerPlugin extends Plugin {
 		this.addCommand({
 			id: 'quit-satusbar-pomo',
 			name: 'Quit timer',
-			icon: 'feather-quit', //for some reason refusing to set quit and only quit icon
+			icon: 'feather-quit',
 			checkCallback: (checking: boolean) => {
 				let leaf = this.app.workspace.activeLeaf;
 				if (leaf && this.timer.mode !== Mode.NoTimer) {
@@ -146,7 +146,7 @@ export default class PomoTimerPlugin extends Plugin {
 	}
 
 
-//on click, open log file; from Day Planner https://github.com/lynchjames/obsidian-day-planner/blob/c8d4d33af294bde4586a943463e8042c0f6a3a2d/src/status-bar.ts#L53
+	//on click, open log file; from Day Planner https://github.com/lynchjames/obsidian-day-planner/blob/c8d4d33af294bde4586a943463e8042c0f6a3a2d/src/status-bar.ts#L53
 	openLogFileOnClick() {
 		this.statusBar.addClass("statusbar-pomo-logging");
 

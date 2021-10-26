@@ -1,7 +1,6 @@
 import { Notice, moment, TFolder, TFile } from 'obsidian';
 import { getDailyNote, createDailyNote, getAllDailyNotes } from 'obsidian-daily-notes-interface';
 import type { Moment } from 'moment';
-
 import { notificationUrl, whiteNoiseUrl } from './audio_urls';
 import { WhiteNoise } from './white_noise';
 import { PomoSettings } from './settings';
@@ -9,12 +8,13 @@ import PomoTimerPlugin from './main';
 
 const MILLISECS_IN_MINUTE = 60 * 1000;
 
-export enum Mode {
+export const enum Mode {
 	Pomo,
 	ShortBreak,
 	LongBreak,
 	NoTimer
 }
+
 
 export class Timer {
 	plugin: PomoTimerPlugin;
@@ -41,11 +41,11 @@ export class Timer {
 		this.whiteNoisePlayer = new WhiteNoise(plugin, whiteNoiseUrl);
 	}
 
-	async onRibbonIconClick() {
+	onRibbonIconClick() {
 		if (this.mode === Mode.NoTimer) {  //if starting from not having a timer running/paused
-			await this.startTimer(Mode.Pomo);
+			this.startTimer(Mode.Pomo);
 		} else { //if timer exists, pause or unpause
-			await this.togglePause();
+			this.togglePause();
 		}
 	}
 
@@ -54,31 +54,50 @@ export class Timer {
 	async setStatusBarText(): Promise<string> {
 		if (this.mode !== Mode.NoTimer) {
 			if (this.paused === true) {
-				return millisecsToString(this.pausedTime);
+				return millisecsToString(this.pausedTime); //just show the paused time
 			}
 
-			/*if reaching the end of the current timer, switch to the next one (e.g. pomo -> break)*/
+			/*if reaching the end of the current timer, end of current timer*/
 			else if (moment().isSameOrAfter(this.endTime)) {
 				await this.handleTimerEnd();
 			}
 
-			return millisecsToString(this.getCountdown());
+			return millisecsToString(this.getCountdown()); //return display value
 		} else {
 			return ""; //fixes TypeError: failed to execute 'appendChild' on 'Node https://github.com/kzhovn/statusbar-pomo-obsidian/issues/4
 		}
 	}
 
 	async handleTimerEnd() {
-		if (this.mode === Mode.Pomo) { /*completed another pomo*/
+		if (this.mode === Mode.Pomo) { //completed another pomo
 			this.pomosSinceStart += 1;
 
 			if (this.settings.logging === true) {
-				this.logPomo();
+				await this.logPomo();
 			}
 		} else if (this.mode === Mode.ShortBreak || this.mode === Mode.LongBreak) {
 			this.cyclesSinceLastAutoStop += 1;
 		}
-		await this.switchMode();
+		
+		//switch mode
+		if (this.settings.notificationSound === true) { //play sound end of timer
+			playNotification();
+		}
+
+		if (this.mode === Mode.Pomo) {
+			if (this.pomosSinceStart % this.settings.longBreakInterval === 0) {
+				this.startTimer(Mode.LongBreak);
+			} else {
+				this.startTimer(Mode.ShortBreak);
+			}
+		} else { //short break. long break, or no timer
+			this.startTimer(Mode.Pomo);
+		}
+
+		if (this.settings.autostartTimer === false && this.settings.numAutoCycles <= this.cyclesSinceLastAutoStop) { //if autostart disabled, pause and allow user to start manually
+			this.pauseTimer();
+			this.cyclesSinceLastAutoStop = 0;
+		}
 	}
 
 	async quitTimer(): Promise<void> {
@@ -95,7 +114,7 @@ export class Timer {
 		await this.plugin.loadSettings(); //why am I loading settings on quit? to ensure that when I restart everything is correct? seems weird
 	}
 
-	async pauseTimer(): Promise<void> {
+	pauseTimer(): void {
 		this.paused = true;
 		this.pausedTime = this.getCountdown();
 
@@ -104,7 +123,7 @@ export class Timer {
 		}
 	}
 
-	async togglePause() {
+	togglePause() {
 		if (this.paused === true) {
 			this.restartTimer();
 		} else if (this.mode !== Mode.NoTimer) { //if some timer running
@@ -113,9 +132,9 @@ export class Timer {
 		}
 	}
 
-	async restartTimer(): Promise<void> {
-		this.setStartEndTime(this.pausedTime);
-		await this.modeRestartingNotification();
+	restartTimer(): void {
+		this.setStartAndEndTime(this.pausedTime);
+		this.modeRestartingNotification();
 		this.paused = false;
 
 		if (this.settings.whiteNoise === true) {
@@ -123,8 +142,9 @@ export class Timer {
 		}
 	}
 
-	async startTimer(mode: Mode): Promise<void> {
+	startTimer(mode: Mode): void {
 		this.mode = mode;
+		this.paused = false;
 
 		if (this.settings.logActiveNote === true) {
 			const activeView = this.plugin.app.workspace.getActiveFile();
@@ -133,15 +153,15 @@ export class Timer {
 			}
 		}
 
-		this.setStartEndTime(this.getTotalModeMillisecs());
-		await this.modeStartingNotification();
+		this.setStartAndEndTime(this.getTotalModeMillisecs());
+		this.modeStartingNotification();
 
 		if (this.settings.whiteNoise === true) {
 			this.whiteNoisePlayer.whiteNoise();
 		}
 	}
 
-	setStartEndTime(millisecsLeft: number): void {
+	setStartAndEndTime(millisecsLeft: number): void {
 		this.startTime = moment(); //start time to current time
 		this.endTime = moment().add(millisecsLeft, 'milliseconds');
 	}
@@ -150,28 +170,6 @@ export class Timer {
 	getCountdown(): number {
 		let endTimeClone = this.endTime.clone(); //rewrite with freeze?
 		return endTimeClone.diff(moment());
-	}
-
-	/*switch from pomos to long or short breaks as appropriate*/
-	async switchMode(): Promise<void> {
-		if (this.settings.notificationSound === true) { //play sound end of timer
-			await playNotification();
-		}
-
-		if (this.mode === Mode.Pomo) {
-			if (this.pomosSinceStart % this.settings.longBreakInterval === 0) {
-				await this.startTimer(Mode.LongBreak);
-			} else {
-				await this.startTimer(Mode.ShortBreak);
-			}
-		} else { //short break. long break, or no timer
-			await this.startTimer(Mode.Pomo);
-		}
-
-		if (this.settings.autostartTimer === false && this.settings.numAutoCycles <= this.cyclesSinceLastAutoStop) { //if autostart disabled, pause and allow user to start manually
-			await this.pauseTimer();
-			this.cyclesSinceLastAutoStop = 0;
-		}
 	}
 
 	getTotalModeMillisecs(): number {
@@ -195,7 +193,7 @@ export class Timer {
 
 	/**************  Notifications  **************/
 	/*Sends notification corresponding to whatever the mode is at the moment it's called*/
-	async modeStartingNotification(): Promise<void> {
+	modeStartingNotification(): void {
 		let time = this.getTotalModeMillisecs();
 		let unit: string;
 
@@ -224,7 +222,7 @@ export class Timer {
 		}
 	}
 
-	async modeRestartingNotification(): Promise<void> {
+	modeRestartingNotification(): void {
 		switch (this.mode) {
 			case (Mode.Pomo): {
 				new Notice(`Restarting pomodoro.`);
@@ -254,7 +252,7 @@ export class Timer {
 		} else { //use file given in settings
 			let file = this.plugin.app.vault.getAbstractFileByPath(this.settings.logFile);
 
-			if (!file || file! instanceof TFolder) { //if no file, create
+			if (!file || file !instanceof TFolder) { //if no file, create
 				console.log("Creating pomodoro log file");
 				await this.plugin.app.vault.create(this.settings.logFile, "");
 			}
@@ -264,7 +262,7 @@ export class Timer {
 	}
 
 	//from Note Refactor plugin by James Lynch, https://github.com/lynchjames/note-refactor-obsidian/blob/80c1a23a1352b5d22c70f1b1d915b4e0a1b2b33f/src/obsidian-file.ts#L69
-	async appendFile(filePath: string, note: string) {
+	async appendFile(filePath: string, note: string): Promise<void> {
 		let existingContent = await this.plugin.app.vault.adapter.read(filePath);
 		if (existingContent.length > 0) {
 			existingContent = existingContent + '\r';
@@ -275,18 +273,18 @@ export class Timer {
 
 /*Returns [HH:]mm:ss left on the current timer*/
 function millisecsToString(millisecs: number): string {
-	let formatedCountDown: string;
+	let formattedCountDown: string;
 
 	if (millisecs >= 60 * 60 * 1000) { /* >= 1 hour*/
-		formatedCountDown = moment.utc(millisecs).format('HH:mm:ss');
+		formattedCountDown = moment.utc(millisecs).format('HH:mm:ss');
 	} else {
-		formatedCountDown = moment.utc(millisecs).format('mm:ss');
+		formattedCountDown = moment.utc(millisecs).format('mm:ss');
 	}
 
-	return formatedCountDown.toString();
+	return formattedCountDown.toString();
 }
 
-async function playNotification() {
+function playNotification(): void {
 	const audio = new Audio(notificationUrl);
 	audio.play();
 }
