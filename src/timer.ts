@@ -67,7 +67,9 @@ export class Timer {
 				}
 				/*if reaching the end of the current timer, end of current timer*/
 				else if (moment().isSameOrAfter(this.endTime)) {
-					if(!this.triggered) {
+					if(!this.triggered && this.mode === Mode.Pomo) {
+						await this.handleTimerEnd();
+					} else {
 						await this.handleTimerEnd();
 					}
 				}
@@ -93,12 +95,13 @@ export class Timer {
 	async handleTimerEnd() {
 		this.triggered = true;
 		this.pauseTimer();
-		if(this.settings.allowExtendedPomodoro) {
+		if(this.settings.allowExtendedPomodoro && this.mode === Mode.Pomo) {
 			await confirmWithModal(this.plugin.app, "Do You Want To Extend Your Pomodoro Session ? ", this.plugin)
 		} else {
 			this.extendPomodoroTime = false;
 		}
-		if(this.extendPomodoroTime) {
+		if(this.extendPomodoroTime && this.mode === Mode.Pomo) {
+			
 			this.restartTimer();
 			this.extendedTime = moment();
 		} else {
