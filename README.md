@@ -72,3 +72,9 @@ Starts a short break manually.
 Starts a long break manually.
 
 ![img_2.png](img_2.png)
+
+#### Reveal Active Pomdoro Note
+
+Reveals the active Pomdoro note to the right pane.
+
+![img_4.png](img_4.png)
