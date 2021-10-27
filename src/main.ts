@@ -1,4 +1,4 @@
-import { addIcon, Plugin } from 'obsidian';
+import { addIcon, MarkdownView, Plugin } from 'obsidian';
 import * as feather from 'feather-icons'; //import just icons I want?
 import { PomoSettingTab, PomoSettings, DEFAULT_SETTINGS } from './settings';
 import { getDailyNoteFile, Mode, Timer } from './timer';
@@ -59,7 +59,7 @@ export default class PomoTimerPlugin extends Plugin {
 		});
 
 		this.addCommand({
-			id: 'log-and-quit-satusbar-pomo',
+			id: 'log-and-quit-statusbar-pomo',
 			name: 'Log Pomodoro Time and Quit.',
 			icon: 'feather-log-and-quit',
 			checkCallback: (checking: boolean) => {
@@ -70,6 +70,30 @@ export default class PomoTimerPlugin extends Plugin {
 						this.timer.triggered = false;
 						this.timer.stopTimerEarly();
 						this.timer.quitTimer();
+					}
+					return true;
+				}
+				return false;
+			}
+		});
+
+		this.addCommand({
+			id: 'open-activenote-statusbar-pomo',
+			name: 'Open Active Note',
+			icon: 'feather-open-active-note',
+			checkCallback: (checking: boolean) => {
+				let leaf = this.app.workspace.activeLeaf;
+				if (leaf && this.timer.mode !== Mode.NoTimer) {
+					if (!checking) {
+						let view = this.app.workspace.getActiveViewOfType(MarkdownView)
+						if ( view ) {
+							let file = view.file;
+							if(file.basename !== this.timer.activeNote.basename) {
+								let rightLeaf = this.app.workspace.splitActiveLeaf('vertical')
+								this.app.workspace.setActiveLeaf(rightLeaf)
+								rightLeaf.openFile(this.timer.activeNote);
+							}
+						}
 					}
 					return true;
 				}
@@ -178,7 +202,7 @@ export default class PomoTimerPlugin extends Plugin {
 					} else {
 						file = this.settings.logFile;
 					}
-	
+
 					this.app.workspace.openLinkText(file, '', false);
 				} catch (error) {
 					console.log(error);
