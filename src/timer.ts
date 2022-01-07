@@ -22,8 +22,9 @@ export class Timer {
 	startTime: Moment; /*when currently running timer started*/
 	endTime: Moment;   /*when currently running timer will end if not paused*/
 	mode: Mode;
-	pausedTime: number;  /*Time left on paused timer, in milliseconds*/
+	pausedTime: number;  /*time left on paused timer, in milliseconds*/
 	paused: boolean;
+	autoPaused: boolean;
 	pomosSinceStart: number;
 	cyclesSinceLastAutoStop: number;
 	activeNote: TFile;
@@ -84,6 +85,7 @@ export class Timer {
 
 		if (this.settings.autostartTimer === false && this.settings.numAutoCycles <= this.cyclesSinceLastAutoStop) { //if autostart disabled, pause and allow user to start manually
 			this.setupTimer();
+			this.autoPaused = true;
 			this.paused = true;
 			this.pausedTime = this.getTotalModeMillisecs();
 			this.cyclesSinceLastAutoStop = 0;
@@ -125,6 +127,11 @@ export class Timer {
 	}
 
 	restartTimer(): void {
+		if (this.settings.logActiveNote === true && this.autoPaused === true) {
+			this.setLogFile();
+			this.autoPaused = false;
+		}
+
 		this.setStartAndEndTime(this.pausedTime);
 		this.modeRestartingNotification();
 		this.paused = false;
@@ -139,10 +146,7 @@ export class Timer {
 		this.paused = false; //do I need this?
 
 		if (this.settings.logActiveNote === true) {
-			const activeView = this.plugin.app.workspace.getActiveFile();
-			if (activeView) {
-				this.activeNote = activeView;
-			}
+			this.setLogFile()
 		}
 
 		this.modeStartingNotification();
@@ -277,6 +281,13 @@ export class Timer {
 			existingContent = existingContent + '\r';
 		}
 		await this.plugin.app.vault.adapter.write(filePath, existingContent + note);
+	}
+
+	setLogFile(){
+		const activeView = this.plugin.app.workspace.getActiveFile();
+		if (activeView) {
+			this.activeNote = activeView;
+		}
 	}
 }
 
