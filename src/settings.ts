@@ -235,6 +235,7 @@ export class PomoSettingTab extends PluginSettingTab {
 				.setDesc("Specify format for the logtext using moment syntax")
 				.addMomentFormat(text => text
 					.setDefaultFormat(this.plugin.settings.logText)
+					.setValue(this.plugin.settings.logText)
 					.onChange(value => {
 						this.plugin.settings.logText = value;
 						this.plugin.saveSettings();
