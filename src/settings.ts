@@ -12,6 +12,7 @@ export interface PomoSettings {
 	autostartTimer: boolean;
 	numAutoCycles: number;
 	ribbonIcon: boolean;
+	emoji: boolean;
 	notificationSound: boolean;
 	backgroundNoiseFile: string;
 	logging: boolean;
@@ -31,6 +32,7 @@ export const DEFAULT_SETTINGS: PomoSettings = {
 	autostartTimer: true,
 	numAutoCycles: 0,
 	ribbonIcon: true,
+	emoji: true,
 	notificationSound: true,
 	backgroundNoiseFile: "",
 	logging: false,
@@ -108,6 +110,16 @@ export class PomoSettingTab extends PluginSettingTab {
 						this.plugin.settings.ribbonIcon = value;
 						this.plugin.saveSettings();
 					}));
+
+		new Setting(containerEl)
+		.setName("Timer emoji")
+		.setDesc("Toggle 🏖️/🍅 emoji that indicate whether a timer is a pomodoro or a break.")
+		.addToggle(toggle => toggle
+				.setValue(this.plugin.settings.emoji)
+				.onChange(value => {
+					this.plugin.settings.emoji = value;
+					this.plugin.saveSettings();
+				}));
 
 		new Setting(containerEl)
 			.setName("Autostart timer")

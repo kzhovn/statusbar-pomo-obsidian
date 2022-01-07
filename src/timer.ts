@@ -55,13 +55,21 @@ export class Timer {
 	//handling switching logic here, should spin out
 	async setStatusBarText(): Promise<string> {
 		if (this.mode !== Mode.NoTimer) {
+			let timer_type_symbol = "";
+			if (this.settings.emoji === true) {
+				timer_type_symbol = "🏖️ ";
+				if (this.mode === Mode.Pomo) {
+					timer_type_symbol = "🍅 ";
+				}
+			}
+
 			if (this.paused === true) {
-				return millisecsToString(this.pausedTime); //just show the paused time
+				return timer_type_symbol + millisecsToString(this.pausedTime); //just show the paused time
 			} else if (moment().isSameOrAfter(this.endTime)) {
 				await this.handleTimerEnd();
 			}
 
-			return millisecsToString(this.getCountdown()); //return display value
+			return timer_type_symbol + millisecsToString(this.getCountdown()); //return display value
 		} else {
 			return ""; //fixes TypeError: failed to execute 'appendChild' on 'Node https://github.com/kzhovn/statusbar-pomo-obsidian/issues/4
 		}
