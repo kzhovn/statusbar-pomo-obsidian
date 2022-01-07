@@ -56,10 +56,7 @@ export class Timer {
 		if (this.mode !== Mode.NoTimer) {
 			if (this.paused === true) {
 				return millisecsToString(this.pausedTime); //just show the paused time
-			}
-
-			/*if reaching the end of the current timer, end of current timer*/
-			else if (moment().isSameOrAfter(this.endTime)) {
+			} else if (moment().isSameOrAfter(this.endTime)) {
 				await this.handleTimerEnd();
 			}
 
@@ -85,19 +82,13 @@ export class Timer {
 			playNotification();
 		}
 
-		if (this.mode === Mode.Pomo) {
-			if (this.pomosSinceStart % this.settings.longBreakInterval === 0) {
-				this.startTimer(Mode.LongBreak);
-			} else {
-				this.startTimer(Mode.ShortBreak);
-			}
-		} else { //short break. long break, or no timer
-			this.startTimer(Mode.Pomo);
-		}
-
 		if (this.settings.autostartTimer === false && this.settings.numAutoCycles <= this.cyclesSinceLastAutoStop) { //if autostart disabled, pause and allow user to start manually
-			this.pauseTimer();
+			this.setupTimer();
+			this.paused = true;
+			this.pausedTime = this.getTotalModeMillisecs();
 			this.cyclesSinceLastAutoStop = 0;
+		} else {
+			this.startTimer();
 		}
 	}
 
@@ -143,9 +134,9 @@ export class Timer {
 		}
 	}
 
-	startTimer(mode: Mode): void {
-		this.mode = mode;
-		this.paused = false;
+	startTimer(mode: Mode = null): void {
+		this.setupTimer(mode);
+		this.paused = false; //do I need this?
 
 		if (this.settings.logActiveNote === true) {
 			const activeView = this.plugin.app.workspace.getActiveFile();
@@ -154,12 +145,29 @@ export class Timer {
 			}
 		}
 
-		this.setStartAndEndTime(this.getTotalModeMillisecs());
 		this.modeStartingNotification();
 
 		if (this.settings.whiteNoise === true) {
 			this.whiteNoisePlayer.whiteNoise();
 		}
+	}
+
+	private setupTimer(mode: Mode = null) {
+		if (mode === null) { //no arg -> start next mode in cycle
+			if (this.mode === Mode.Pomo) {
+				if (this.pomosSinceStart % this.settings.longBreakInterval === 0) {
+					this.mode = Mode.LongBreak;
+				} else {
+					this.mode = Mode.ShortBreak;
+				}
+			} else { //short break, long break, or no timer
+				this.mode = Mode.Pomo;
+			}
+		} else { //starting a specific mode passed to func
+			this.mode = mode;
+		}
+
+		this.setStartAndEndTime(this.getTotalModeMillisecs());
 	}
 
 	setStartAndEndTime(millisecsLeft: number): void {
