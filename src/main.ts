@@ -113,8 +113,6 @@ export default class PomoTimerPlugin extends Plugin {
 		});
 	}
 
-	/**************  Meta  **************/
-
 	onunload() {
 		this.timer.quitTimer();
 		console.log('Unloading status bar pomodoro timer');

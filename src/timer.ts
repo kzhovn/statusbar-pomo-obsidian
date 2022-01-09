@@ -262,9 +262,15 @@ export class Timer {
 	/**************  Logging  **************/
 	async logPomo(): Promise<void> {
 		var logText = moment().format(this.settings.logText);
+		const logFilePlaceholder = "{{logFile}}";
 
-		if (this.settings.logActiveNote === true) { //append link to note that was active when pomo started
-			logText = logText + " " + this.plugin.app.fileManager.generateMarkdownLink(this.activeNote, '');
+		if (this.settings.logActiveNote === true) {
+			let linkText = this.plugin.app.fileManager.generateMarkdownLink(this.activeNote, '');
+			if (logText.includes(logFilePlaceholder)) {
+				logText = logText.replace(logFilePlaceholder, linkText);
+			} else {
+				logText = logText + " " + linkText;
+			}
 		}
 
 		if (this.settings.logToDaily === true) { //use today's note
