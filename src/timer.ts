@@ -271,8 +271,11 @@ export class Timer {
 			} else {
 				logText = logText + " " + linkText;
 			}
+
+			logText = logText.replace(String.raw`\n`, "\n");
 		}
 
+		console.log(logText);
 		if (this.settings.logToDaily === true) { //use today's note
 			let file = (await getDailyNoteFile()).path;
 			await this.appendFile(file, logText);
@@ -289,12 +292,12 @@ export class Timer {
 	}
 
 	//from Note Refactor plugin by James Lynch, https://github.com/lynchjames/note-refactor-obsidian/blob/80c1a23a1352b5d22c70f1b1d915b4e0a1b2b33f/src/obsidian-file.ts#L69
-	async appendFile(filePath: string, note: string): Promise<void> {
+	async appendFile(filePath: string, logText: string): Promise<void> {
 		let existingContent = await this.plugin.app.vault.adapter.read(filePath);
 		if (existingContent.length > 0) {
 			existingContent = existingContent + '\r';
 		}
-		await this.plugin.app.vault.adapter.write(filePath, existingContent + note);
+		await this.plugin.app.vault.adapter.write(filePath, existingContent + logText);
 	}
 
 	setLogFile(){
