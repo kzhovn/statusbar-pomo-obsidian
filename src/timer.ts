@@ -275,7 +275,6 @@ export class Timer {
 			logText = logText.replace(String.raw`\n`, "\n");
 		}
 
-		console.log(logText);
 		if (this.settings.logToDaily === true) { //use today's note
 			let file = (await getDailyNoteFile()).path;
 			await this.appendFile(file, logText);
