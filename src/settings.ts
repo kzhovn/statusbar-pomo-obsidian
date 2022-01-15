@@ -56,7 +56,7 @@ export class PomoSettingTab extends PluginSettingTab {
 	display(): void {
 		let { containerEl } = this;
 		containerEl.empty();
-		containerEl.createEl('h2', { text: 'Status Bar Pomodoro Timer - Settings' });
+		containerEl.createEl('h2', { text: 'Timer' });
 
 	
 		/**************  Timer settings **************/
@@ -102,26 +102,6 @@ export class PomoSettingTab extends PluginSettingTab {
 				}));
 
 		new Setting(containerEl)
-			.setName("Sidebar icon")
-			.setDesc("Toggle left sidebar icon. Restart Obsidian for the change to take effect")
-			.addToggle(toggle => toggle
-					.setValue(this.plugin.settings.ribbonIcon)
-					.onChange(value => {
-						this.plugin.settings.ribbonIcon = value;
-						this.plugin.saveSettings();
-					}));
-
-		new Setting(containerEl)
-		.setName("Timer emoji")
-		.setDesc("Toggle 🏖️/🍅 emoji that indicate whether a timer is a pomodoro or a break.")
-		.addToggle(toggle => toggle
-				.setValue(this.plugin.settings.emoji)
-				.onChange(value => {
-					this.plugin.settings.emoji = value;
-					this.plugin.saveSettings();
-				}));
-
-		new Setting(containerEl)
 			.setName("Autostart timer")
 			.setDesc("Start each pomodoro and break automatically. When off, click the sidebar icon on the left or use the toggle pause command to start the next timer")
 			.addToggle(toggle => toggle
@@ -146,10 +126,34 @@ export class PomoSettingTab extends PluginSettingTab {
 		}
 
 
+		/************** Appearance ************************/
+
+		containerEl.createEl("h2", { text: "Appearance"});
+		new Setting(containerEl)
+		.setName("Sidebar icon")
+		.setDesc("Toggle left sidebar icon. Restart Obsidian for the change to take effect")
+		.addToggle(toggle => toggle
+				.setValue(this.plugin.settings.ribbonIcon)
+				.onChange(value => {
+					this.plugin.settings.ribbonIcon = value;
+					this.plugin.saveSettings();
+				}));
+
+		new Setting(containerEl)
+		.setName("Timer emoji")
+		.setDesc("Toggle 🏖️/🍅 emoji that indicate whether a timer is a pomodoro or a break.")
+		.addToggle(toggle => toggle
+				.setValue(this.plugin.settings.emoji)
+				.onChange(value => {
+					this.plugin.settings.emoji = value;
+					this.plugin.saveSettings();
+				}));
+
 
 
 		/**************  Sound settings **************/
-			
+		containerEl.createEl("h2", { text: "Sound"});
+	
 		new Setting(containerEl)
 			.setName("Notification sound")
 			.setDesc("Play notification sound at the end of each pomodoro and break")
@@ -181,6 +185,7 @@ export class PomoSettingTab extends PluginSettingTab {
 
 
 		/**************  Logging settings **************/
+		containerEl.createEl("h2", { text: "Logging"});
 
 		new Setting(containerEl)
 			.setName("Logging")
