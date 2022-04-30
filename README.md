@@ -21,6 +21,8 @@ If you enable logging, the plugin will write to the file you specify as your log
 
 "Log to daily note" will append the log to the daily note. Please note that this currently *only* works by appending to the end of the file.
 
+"Tally mode logging" will log successive "🍅" on a single line with datestamp, e.g. "2022-04-30 🍅🍅🍅".
+
 "Log active note" will include a link to the active note at the time the pomodoro timer started in the log message. Be default, the link to the note will appear after the timestamp, but you can customize the location using [{{logFile}}].
 
 You can open the current log file by clicking the timer.

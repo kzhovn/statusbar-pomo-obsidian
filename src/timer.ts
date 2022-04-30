@@ -297,8 +297,22 @@ export class Timer {
 	//from Note Refactor plugin by James Lynch, https://github.com/lynchjames/note-refactor-obsidian/blob/80c1a23a1352b5d22c70f1b1d915b4e0a1b2b33f/src/obsidian-file.ts#L69
 	async appendFile(filePath: string, logText: string): Promise<void> {
 		let existingContent = await this.plugin.app.vault.adapter.read(filePath);
-		if (existingContent.length > 0) {
-			existingContent = existingContent + '\r';
+
+		if (this.settings.logTally === true) {
+			let lastLine = existingContent.split(/\n/).pop();
+			let dateToday = obsidian.moment().format('YYYY-MM-DD');
+			if (!lastLine.startsWith(dateToday)) {
+				if (lastLine.length > 0) {
+					existingContent = existingContent + '\n';
+				}
+				logText = dateToday + ' ' + this.settings.logTallyText;
+			} else {
+				logText = this.settings.logTallyText;
+			}
+		} else {
+			if (existingContent.length > 0) {
+				existingContent = existingContent + '\r';
+			}
 		}
 		await this.plugin.app.vault.adapter.write(filePath, existingContent + logText);
 	}
@@ -373,9 +387,3 @@ export async function getDailyNoteFile(): Promise<TFile> {
 
 	return file;
 }
-
-
-
-
-
-

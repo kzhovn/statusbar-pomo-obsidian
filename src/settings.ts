@@ -19,6 +19,8 @@ export interface PomoSettings {
 	logging: boolean;
 	logFile: string;
 	logText: string;
+	logTally: boolean;
+	logTallyText: string;
 	logToDaily: boolean;
 	logActiveNote: boolean;
 	fancyStatusBar: boolean;
@@ -41,6 +43,8 @@ export const DEFAULT_SETTINGS: PomoSettings = {
 	logFile: "Pomodoro Log.md",
 	logToDaily: false,
 	logText: "[🍅] dddd, MMMM DD YYYY, h:mm A",
+	logTally: false,
+	logTallyText: "🍅",
 	logActiveNote: false,
 	fancyStatusBar: false,
 	whiteNoise: false,
@@ -254,6 +258,16 @@ export class PomoSettingTab extends PluginSettingTab {
 					.setValue(this.plugin.settings.logText)
 					.onChange(value => {
 						this.plugin.settings.logText = value;
+						this.plugin.saveSettings();
+					}));
+
+			new Setting(containerEl)
+				.setName("Tally mode logging")
+				.setDesc("Log a running tally per day, e.g. \"2022-04-30 🍅🍅🍅\"")
+				.addToggle(toggle => toggle
+					.setValue(this.plugin.settings.logTally)
+					.onChange(value => {
+						this.plugin.settings.logTally = value;
 						this.plugin.saveSettings();
 					}));
 
