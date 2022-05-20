@@ -85,7 +85,7 @@ export class Timer {
 		} else if (this.mode === Mode.ShortBreak || this.mode === Mode.LongBreak) {
 			this.cyclesSinceLastAutoStop += 1;
 		}
-		
+
 		//switch mode
 		if (this.settings.notificationSound === true) { //play sound end of timer
 			playNotification();

@@ -1,5 +1,4 @@
-import { addIcon, Plugin } from 'obsidian';
-import * as feather from 'feather-icons'; //import just icons I want?
+import { Plugin } from 'obsidian';
 import { PomoSettingTab, PomoSettings, DEFAULT_SETTINGS } from './settings';
 import { getDailyNoteFile, Mode, Timer } from './timer';
 
@@ -37,14 +36,10 @@ export default class PomoTimerPlugin extends Plugin {
 		this.registerInterval(window.setInterval(async () =>
 			this.statusBar.setText(await this.timer.setStatusBarText()), 500));
 
-		addIcon("feather-play", feather.icons.play.toString());
-		addIcon("feather-pause", feather.icons.pause.toString());
-		addIcon("feather-quit", feather.icons.x.toSvg({viewBox: "0 0 24 24", width: "100", height: "100"}).toString()); //https://github.com/phibr0/obsidian-customizable-sidebar/blob/master/src/ui/icons.ts
-
 		this.addCommand({
 			id: 'start-satusbar-pomo',
 			name: 'Start pomodoro',
-			icon: 'feather-play',
+			icon: 'play',
 			checkCallback: (checking: boolean) => {
 				let leaf = this.app.workspace.activeLeaf;
 				if (leaf) {
@@ -60,7 +55,7 @@ export default class PomoTimerPlugin extends Plugin {
 		this.addCommand({
 			id: 'pause-satusbar-pomo',
 			name: 'Toggle timer pause',
-			icon: 'feather-pause',
+			icon: 'pause',
 			checkCallback: (checking: boolean) => {
 				let leaf = this.app.workspace.activeLeaf;
 				if (leaf && this.timer.mode !== Mode.NoTimer) {
@@ -76,7 +71,7 @@ export default class PomoTimerPlugin extends Plugin {
 		this.addCommand({
 			id: 'quit-satusbar-pomo',
 			name: 'Quit timer',
-			icon: 'feather-quit',
+			icon: 'quit',
 			checkCallback: (checking: boolean) => {
 				let leaf = this.app.workspace.activeLeaf;
 				if (leaf && this.timer.mode !== Mode.NoTimer) {
@@ -104,7 +99,7 @@ export default class PomoTimerPlugin extends Plugin {
 					} else {
 						file = this.settings.logFile;
 					}
-	
+
 					this.app.workspace.openLinkText(file, '', false);
 				} catch (error) {
 					console.log(error);
