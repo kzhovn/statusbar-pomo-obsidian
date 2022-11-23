@@ -6,6 +6,8 @@ import { WhiteNoise } from './white_noise';
 import { PomoSettings } from './settings';
 import PomoTimerPlugin from './main';
 
+const electron = require("electron");
+
 const MILLISECS_IN_MINUTE = 60 * 1000;
 
 export const enum Mode {
@@ -89,6 +91,9 @@ export class Timer {
 		//switch mode
 		if (this.settings.notificationSound === true) { //play sound end of timer
 			playNotification();
+		}
+		if (this.settings.useSystemNotification === true) { //show system notification end of timer
+			showSystemNotification(this.mode, this.settings.emoji);
 		}
 
 		if (this.settings.autostartTimer === false && this.settings.numAutoCycles <= this.cyclesSinceLastAutoStop) { //if autostart disabled, pause and allow user to start manually
@@ -323,6 +328,40 @@ function millisecsToString(millisecs: number): string {
 function playNotification(): void {
 	const audio = new Audio(notificationUrl);
 	audio.play();
+}
+
+function showSystemNotification(mode:Mode, useEmoji:boolean): void {
+	let text = "";
+	switch (mode) {
+		case (Mode.Pomo): {
+			let emoji = useEmoji ? "🏖" : ""
+			text = `End of the pomodoro, time to take a break ${emoji}`;
+			break;
+		}
+		case (Mode.ShortBreak):
+		case (Mode.LongBreak): {
+			let emoji = useEmoji ? "🍅" : ""
+			text = `End of the break, time for the next pomodoro ${emoji}`;
+			break;
+		}
+		case (Mode.NoTimer): {
+			// no system notification needed
+			return;
+		}
+	}
+	let emoji = useEmoji ? "🍅" : ""
+	let title = `Obsidian Pomodoro ${emoji}`;
+
+	// Show system notification
+	const Notification = (electron as any).remote.Notification;
+	const n = new Notification({
+		title: title,
+		body: text
+	});
+	n.on("click", () => {
+		n.close();
+	});
+	n.show();
 }
 
 export async function getDailyNoteFile(): Promise<TFile> {

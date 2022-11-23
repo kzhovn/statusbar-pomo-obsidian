@@ -14,6 +14,7 @@ export interface PomoSettings {
 	ribbonIcon: boolean;
 	emoji: boolean;
 	notificationSound: boolean;
+	useSystemNotification: boolean;
 	backgroundNoiseFile: string;
 	logging: boolean;
 	logFile: string;
@@ -34,6 +35,7 @@ export const DEFAULT_SETTINGS: PomoSettings = {
 	ribbonIcon: true,
 	emoji: true,
 	notificationSound: true,
+	useSystemNotification: false,
 	backgroundNoiseFile: "",
 	logging: false,
 	logFile: "Pomodoro Log.md",
@@ -149,6 +151,15 @@ export class PomoSettingTab extends PluginSettingTab {
 					this.plugin.saveSettings();
 				}));
 
+		new Setting(containerEl)
+			.setName("System notification")
+			.setDesc("Use system notifications at the end of each pomodoro and break")
+			.addToggle(toggle => toggle
+				.setValue(this.plugin.settings.useSystemNotification)
+				.onChange(value => {
+					this.plugin.settings.useSystemNotification = value;
+					this.plugin.saveSettings();
+				}));
 
 
 		/**************  Sound settings **************/
