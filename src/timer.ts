@@ -356,7 +356,8 @@ function showSystemNotification(mode:Mode, useEmoji:boolean): void {
 	const Notification = (electron as any).remote.Notification;
 	const n = new Notification({
 		title: title,
-		body: text
+		body: text,
+		silent: true
 	});
 	n.on("click", () => {
 		n.close();
