@@ -1,6 +1,5 @@
 import { Notice, moment, TFolder, TFile } from 'obsidian';
 import { getDailyNote, createDailyNote, getAllDailyNotes } from 'obsidian-daily-notes-interface';
-import type { Moment } from 'moment';
 import { notificationUrl, whiteNoiseUrl } from './audio_urls';
 import { WhiteNoise } from './white_noise';
 import { PomoSettings } from './settings';
@@ -21,8 +20,8 @@ export const enum Mode {
 export class Timer {
 	plugin: PomoTimerPlugin;
 	settings: PomoSettings;
-	startTime: Moment; /*when currently running timer started*/
-	endTime: Moment;   /*when currently running timer will end if not paused*/
+	startTime: moment.Moment; /*when currently running timer started*/
+	endTime: moment.Moment;   /*when currently running timer will end if not paused*/
 	mode: Mode;
 	pausedTime: number;  /*time left on paused timer, in milliseconds*/
 	paused: boolean;
@@ -366,10 +365,10 @@ function showSystemNotification(mode:Mode, useEmoji:boolean): void {
 }
 
 export async function getDailyNoteFile(): Promise<TFile> {
-	const file = getDailyNote(moment(), getAllDailyNotes());
+	const file = getDailyNote(moment() as any, getAllDailyNotes()); // as any, because getDailyNote is importing its own Moment and I'm using Obsidian's
 
 	if (!file) {
-		return await createDailyNote(moment());
+		return await createDailyNote(moment() as any);
 	}
 
 	return file;
