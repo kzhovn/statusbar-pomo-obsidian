@@ -1,7 +1,6 @@
 import { Notice, moment, TFolder, TFile } from 'obsidian';
 import { notificationUrl, whiteNoiseUrl } from './audio_urls';
 import { WhiteNoise } from './white_noise';
-import { PomoSettings } from './settings';
 import PomoTimerPlugin from './main';
 
 const electron = require("electron");
@@ -18,7 +17,6 @@ export const enum Mode {
 
 export class Timer {
 	plugin: PomoTimerPlugin;
-	settings: PomoSettings;
 	startTime: moment.Moment; /*when currently running timer started*/
 	endTime: moment.Moment;   /*when currently running timer will end if not paused*/
 	mode: Mode;
@@ -32,13 +30,12 @@ export class Timer {
 
 	constructor(plugin: PomoTimerPlugin) {
 		this.plugin = plugin;
-		this.settings = plugin.settings;
 		this.mode = Mode.NoTimer;
 		this.paused = false;
 		this.pomosSinceStart = 0;
 		this.cyclesSinceLastAutoStop = 0;
 
-		if (this.settings.whiteNoise === true) {
+		if (this.plugin.settings.whiteNoise === true) {
 			this.whiteNoisePlayer = new WhiteNoise(plugin, whiteNoiseUrl);
 		}
 	}
@@ -56,7 +53,7 @@ export class Timer {
 	async setStatusBarText(): Promise<string> {
 		if (this.mode !== Mode.NoTimer) {
 			let timer_type_symbol = "";
-			if (this.settings.emoji === true) {
+			if (this.plugin.settings.emoji === true) {
 				timer_type_symbol = "🏖️ ";
 				if (this.mode === Mode.Pomo) {
 					timer_type_symbol = "🍅 ";
@@ -79,7 +76,7 @@ export class Timer {
 		if (this.mode === Mode.Pomo) { //completed another pomo
 			this.pomosSinceStart += 1;
 
-			if (this.settings.logging === true) {
+			if (this.plugin.settings.logging === true) {
 				await this.logPomo();
 			}
 		} else if (this.mode === Mode.ShortBreak || this.mode === Mode.LongBreak) {
@@ -87,14 +84,14 @@ export class Timer {
 		}
 
 		//switch mode
-		if (this.settings.notificationSound === true) { //play sound end of timer
+		if (this.plugin.settings.notificationSound === true) { //play sound end of timer
 			playNotification();
 		}
-		if (this.settings.useSystemNotification === true) { //show system notification end of timer
-			showSystemNotification(this.mode, this.settings.emoji);
+		if (this.plugin.settings.useSystemNotification === true) { //show system notification end of timer
+			showSystemNotification(this.mode, this.plugin.settings.emoji);
 		}
 
-		if (this.settings.autostartTimer === false && this.settings.numAutoCycles <= this.cyclesSinceLastAutoStop) { //if autostart disabled, pause and allow user to start manually
+		if (this.plugin.settings.autostartTimer === false && this.plugin.settings.numAutoCycles <= this.cyclesSinceLastAutoStop) { //if autostart disabled, pause and allow user to start manually
 			this.setupTimer();
 			this.autoPaused = true;
 			this.paused = true;
@@ -112,7 +109,7 @@ export class Timer {
 		this.paused = false;
 		this.pomosSinceStart = 0;
 
-		if (this.settings.whiteNoise === true) {
+		if (this.plugin.settings.whiteNoise === true) {
 			this.whiteNoisePlayer.stopWhiteNoise();
 		}
 
@@ -123,7 +120,7 @@ export class Timer {
 		this.paused = true;
 		this.pausedTime = this.getCountdown();
 
-		if (this.settings.whiteNoise === true) {
+		if (this.plugin.settings.whiteNoise === true) {
 			this.whiteNoisePlayer.stopWhiteNoise();
 		}
 	}
@@ -138,7 +135,7 @@ export class Timer {
 	}
 
 	restartTimer(): void {
-		if (this.settings.logActiveNote === true && this.autoPaused === true) {
+		if (this.plugin.settings.logActiveNote === true && this.autoPaused === true) {
 			this.setLogFile();
 			this.autoPaused = false;
 		}
@@ -147,7 +144,7 @@ export class Timer {
 		this.modeRestartingNotification();
 		this.paused = false;
 
-		if (this.settings.whiteNoise === true) {
+		if (this.plugin.settings.whiteNoise === true) {
 			this.whiteNoisePlayer.whiteNoise();
 		}
 	}
@@ -156,13 +153,13 @@ export class Timer {
 		this.setupTimer(mode);
 		this.paused = false; //do I need this?
 
-		if (this.settings.logActiveNote === true) {
+		if (this.plugin.settings.logActiveNote === true) {
 			this.setLogFile()
 		}
 
 		this.modeStartingNotification();
 
-		if (this.settings.whiteNoise === true) {
+		if (this.plugin.settings.whiteNoise === true) {
 			this.whiteNoisePlayer.whiteNoise();
 		}
 	}
@@ -170,7 +167,7 @@ export class Timer {
 	private setupTimer(mode: Mode = null) {
 		if (mode === null) { //no arg -> start next mode in cycle
 			if (this.mode === Mode.Pomo) {
-				if (this.pomosSinceStart % this.settings.longBreakInterval === 0) {
+				if (this.pomosSinceStart % this.plugin.settings.longBreakInterval === 0) {
 					this.mode = Mode.LongBreak;
 				} else {
 					this.mode = Mode.ShortBreak;
@@ -197,17 +194,16 @@ export class Timer {
 	}
 
 	getTotalModeMillisecs(): number {
-		this.settings = this.plugin.settings; // Load fresh settings to ensure that updated values are used if times are changed mid run; ideally should be handled globally at each settings save
 
 		switch (this.mode) {
 			case Mode.Pomo: {
-				return this.settings.pomo * MILLISECS_IN_MINUTE;
+				return this.plugin.settings.pomo * MILLISECS_IN_MINUTE;
 			}
 			case Mode.ShortBreak: {
-				return this.settings.shortBreak * MILLISECS_IN_MINUTE;
+				return this.plugin.settings.shortBreak * MILLISECS_IN_MINUTE;
 			}
 			case Mode.LongBreak: {
-				return this.settings.longBreak * MILLISECS_IN_MINUTE;
+				return this.plugin.settings.longBreak * MILLISECS_IN_MINUTE;
 			}
 			case Mode.NoTimer: {
 				throw new Error("Mode NoTimer does not have an associated time value");
@@ -266,10 +262,10 @@ export class Timer {
 
 	/**************  Logging  **************/
 	async logPomo(): Promise<void> {
-		var logText = moment().format(this.settings.logText);
+		var logText = moment().format(this.plugin.settings.logText);
 		const logFilePlaceholder = "{{logFile}}";
 
-		if (this.settings.logActiveNote === true) {
+		if (this.plugin.settings.logActiveNote === true) {
 			let linkText = this.plugin.app.fileManager.generateMarkdownLink(this.activeNote, '');
 			if (logText.includes(logFilePlaceholder)) {
 				logText = logText.replace(logFilePlaceholder, linkText);
@@ -280,18 +276,18 @@ export class Timer {
 			logText = logText.replace(String.raw`\n`, "\n");
 		}
 
-		if (this.settings.logToDaily === true) { //use today's note
+		if (this.plugin.settings.logToDaily === true) { //use today's note
 			let file = (await this.plugin.getDailyNoteFile()).path;
 			await this.appendFile(file, logText);
 		} else { //use file given in settings
-			let file = this.plugin.app.vault.getAbstractFileByPath(this.settings.logFile);
+			let file = this.plugin.app.vault.getAbstractFileByPath(this.plugin.settings.logFile);
 
 			if (!file || file !instanceof TFolder) { //if no file, create
 				console.log("Creating pomodoro log file");
-				await this.plugin.app.vault.create(this.settings.logFile, "");
+				await this.plugin.app.vault.create(this.plugin.settings.logFile, "");
 			}
 
-			await this.appendFile(this.settings.logFile, logText);
+			await this.appendFile(this.plugin.settings.logFile, logText);
 		}
 	}
 
