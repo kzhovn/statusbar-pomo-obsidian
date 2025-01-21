@@ -1,5 +1,4 @@
 import { Notice, moment, TFolder, TFile } from 'obsidian';
-import { getDailyNote, createDailyNote, getAllDailyNotes } from 'obsidian-daily-notes-interface';
 import { notificationUrl, whiteNoiseUrl } from './audio_urls';
 import { WhiteNoise } from './white_noise';
 import { PomoSettings } from './settings';
@@ -282,7 +281,7 @@ export class Timer {
 		}
 
 		if (this.settings.logToDaily === true) { //use today's note
-			let file = (await getDailyNoteFile()).path;
+			let file = (await this.plugin.getDailyNoteFile()).path;
 			await this.appendFile(file, logText);
 		} else { //use file given in settings
 			let file = this.plugin.app.vault.getAbstractFileByPath(this.settings.logFile);
@@ -366,15 +365,7 @@ function showSystemNotification(mode:Mode, useEmoji:boolean): void {
 	n.show();
 }
 
-export async function getDailyNoteFile(): Promise<TFile> {
-	const file = getDailyNote(moment() as any, getAllDailyNotes()); // as any, because getDailyNote is importing its own Moment and I'm using Obsidian's
 
-	if (!file) {
-		return await createDailyNote(moment() as any);
-	}
-
-	return file;
-}
 
 
 
