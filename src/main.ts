@@ -122,7 +122,6 @@ export default class PomoTimerPlugin extends Plugin {
 		await this.saveData(this.settings);
 	}
 
-
 	async getDailyNoteFile(): Promise<TFile> {
 	try {
 		let file = getDailyNote(moment() as any, getAllDailyNotes()); // as any, because getDailyNote is importing its own Moment and I'm using Obsidian's
