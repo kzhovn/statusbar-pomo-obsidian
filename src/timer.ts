@@ -198,6 +198,8 @@ export class Timer {
 	}
 
 	getTotalModeMillisecs(): number {
+		this.settings = this.plugin.settings; // Load fresh settings to ensure that updated values are used if times are changed mid run; ideally should be handled globally at each settings save
+
 		switch (this.mode) {
 			case Mode.Pomo: {
 				return this.settings.pomo * MILLISECS_IN_MINUTE;
